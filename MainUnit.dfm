@@ -35,9 +35,74 @@ object Form1: TForm1
     object Label1: TLabel
       Left = 16
       Top = 13
-      Width = 100
+      Width = 102
       Height = 13
       Caption = 'Seleccionar Tabla:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object Label2: TLabel
+      Left = 16
+      Top = 65
+      Width = 103
+      Height = 13
+      Caption = 'Filtrar Resultados:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lblFilterEstatus: TLabel
+      Left = 16
+      Top = 93
+      Width = 45
+      Height = 13
+      Caption = 'Estatus:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lblFilterTipo: TLabel
+      Left = 200
+      Top = 93
+      Width = 27
+      Height = 13
+      Caption = 'Tipo:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lblFilterLote: TLabel
+      Left = 368
+      Top = 93
+      Width = 28
+      Height = 13
+      Caption = 'Lote:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lblFilterPropietario: TLabel
+      Left = 528
+      Top = 93
+      Width = 66
+      Height = 13
+      Caption = 'Propietario:'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWhite
       Font.Height = -11
@@ -48,29 +113,38 @@ object Form1: TForm1
     object cbTables: TComboBox
       Left = 16
       Top = 32
-      Width = 201
+      Width = 140
       Height = 21
       Style = csDropDownList
       TabOrder = 0
       OnChange = cbTablesChange
     end
     object btnRefresh: TButton
-      Left = 225
-      Top = 30
-      Width = 110
+      Left = 162
+      Top = 31
+      Width = 87
       Height = 25
       Caption = 'Aplicar Cambios'
       TabOrder = 1
       OnClick = btnRefreshClick
     end
     object btnDelete: TButton
-      Left = 340
+      Left = 339
       Top = 30
       Width = 80
       Height = 25
       Caption = 'Eliminar'
-      TabOrder = 15
+      TabOrder = 5
       OnClick = btnDeleteClick
+    end
+    object btnAdd: TButton
+      Left = 253
+      Top = 30
+      Width = 80
+      Height = 25
+      Caption = 'Agregar'
+      TabOrder = 12
+      OnClick = btnAddClick
     end
     object btnUndo: TButton
       Left = 425
@@ -79,7 +153,7 @@ object Form1: TForm1
       Height = 25
       Caption = 'Deshacer'
       Enabled = False
-      TabOrder = 16
+      TabOrder = 11
       OnClick = btnUndoClick
     end
     object btnExportPDF: TButton
@@ -115,75 +189,10 @@ object Form1: TForm1
       TabOrder = 10
       OnClick = btnCloseAppClick
     end
-    object Label2: TLabel
-      Left = 16
-      Top = 65
-      Width = 100
-      Height = 13
-      Caption = 'Filtrar Resultados:'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object lblFilterEstatus: TLabel
-      Left = 16
-      Top = 93
-      Width = 45
-      Height = 13
-      Caption = 'Estatus:'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object lblFilterTipo: TLabel
-      Left = 200
-      Top = 93
-      Width = 30
-      Height = 13
-      Caption = 'Tipo:'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object lblFilterLote: TLabel
-      Left = 368
-      Top = 93
-      Width = 30
-      Height = 13
-      Caption = 'Lote:'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object lblFilterPropietario: TLabel
-      Left = 528
-      Top = 93
-      Width = 65
-      Height = 13
-      Caption = 'Propietario:'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -11
-      Font.Name = 'Tahoma'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
     object edtFilter: TEdit
-      Left = 120
-      Top = 62
-      Width = 630
+      Left = 125
+      Top = 61
+      Width = 379
       Height = 21
       TabOrder = 4
       TextHint = 'Escribe aqu'#237' para buscar o filtrar en la tabla...'
@@ -233,7 +242,7 @@ object Form1: TForm1
     Height = 150
     OnClickCheck = FilterComboChange
     ItemHeight = 13
-    TabOrder = 11
+    TabOrder = 3
     Visible = False
   end
   object cklFilterTipo: TCheckListBox
@@ -243,7 +252,7 @@ object Form1: TForm1
     Height = 150
     OnClickCheck = FilterComboChange
     ItemHeight = 13
-    TabOrder = 12
+    TabOrder = 4
     Visible = False
   end
   object cklFilterLote: TCheckListBox
@@ -253,7 +262,7 @@ object Form1: TForm1
     Height = 150
     OnClickCheck = FilterComboChange
     ItemHeight = 13
-    TabOrder = 13
+    TabOrder = 5
     Visible = False
   end
   object cklFilterPropietario: TCheckListBox
@@ -263,7 +272,7 @@ object Form1: TForm1
     Height = 150
     OnClickCheck = FilterComboChange
     ItemHeight = 13
-    TabOrder = 14
+    TabOrder = 6
     Visible = False
   end
   object PanelLeft: TPanel
@@ -277,7 +286,7 @@ object Form1: TForm1
       Left = 1
       Top = 1
       Width = 148
-      Height = 382
+      Height = 319
       OnClickCheck = chkColumnsClickCheck
       Align = alClient
       DragMode = dmAutomatic

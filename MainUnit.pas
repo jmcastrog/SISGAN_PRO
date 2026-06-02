@@ -1,4 +1,4 @@
-unit MainUnit;
+﻿unit MainUnit;
 
 interface
 
@@ -26,6 +26,7 @@ type
     btnExportPDF: TButton;
     btnTogglePanel: TButton;
     btnDelete: TButton;
+    btnAdd: TButton;
     btnUndo: TButton;
     TimerUndo: TTimer;
     Label2: TLabel;
@@ -62,6 +63,7 @@ type
     procedure btnFilterClick(Sender: TObject);
     procedure btnCloseAppClick(Sender: TObject);
     procedure btnDeleteClick(Sender: TObject);
+    procedure btnAddClick(Sender: TObject);
     procedure btnUndoClick(Sender: TObject);
     procedure TimerUndoTimer(Sender: TObject);
     procedure TrayIcon1DblClick(Sender: TObject);
@@ -82,7 +84,7 @@ type
     FAllowClose: Boolean;
     { Web Server Support }
     FWebServer: TIdHTTPServer;
-    procedure LoadCatalogs;
+    lblRecordCount: TLabel;
     procedure LoadTables;
     procedure SaveTableConfig(const TableName: string);
     procedure LoadTableConfig(const TableName: string);
@@ -96,8 +98,14 @@ type
     procedure StartWebServer;
     class function GetTableSQL(const TableName: string): string;
     class function CalcEdadFromFechaStr(const FechaStr: string): string;
-  public
-    { Public declarations }
+    procedure UpdateRecordCount;
+    procedure FQueryAfterPost(DataSet: TDataSet);
+    procedure SetupFilterSlot(CheckList: TCheckListBox; Button: TButton; LabelCtrl: TLabel; var Values: TStringList; const FieldName: string);
+    class function GetCATTable(const FieldName: string): string;
+    class function GetCATAnimalesField(const TableName: string): string;
+    class function GetFKField(const TableName: string): string;
+    class function GetFilterField(const TableName: string; Slot: Integer): string;
+    class function GetFilterLabel(const FieldName: string): string;
   end;
 
 var
@@ -148,6 +156,16 @@ begin
   FListEstatus := TStringList.Create;
   FListPropietario := TStringList.Create;
 
+  // Etiqueta inferior con contador de registros
+  lblRecordCount := TLabel.Create(Self);
+  lblRecordCount.Parent := Self;
+  lblRecordCount.Align := alBottom;
+  lblRecordCount.AutoSize := False;
+  lblRecordCount.Height := 20;
+  lblRecordCount.AlignWithMargins := True;
+  lblRecordCount.Layout := tlCenter;
+  lblRecordCount.Caption := 'Registros: 0';
+
   // Ocultar el panel lateral por defecto
   PanelLeft.Visible := False;
   Splitter1.Visible := False;
@@ -157,8 +175,8 @@ begin
   
   FAllowClose := False;
   
-  // Forzar un icono de sistema real (Información) para que sea visible
-  TrayIcon1.Icon.Handle := LoadIcon(0, IDI_INFORMATION);
+  // Usar el icono de la vaquita para el tray
+  TrayIcon1.Icon.Handle := Application.Icon.Handle;
   TrayIcon1.Visible := False;
   TrayIcon1.Visible := True;
   
@@ -216,92 +234,33 @@ begin
     // Forzar el modo WAL por si el parametro no fue suficiente
     FConnection.ExecSQL('PRAGMA journal_mode=WAL');
     
+    // Crear tabla CAT_Propietario si no existe y poblarla
+    FConnection.ExecSQL(
+      'CREATE TABLE IF NOT EXISTS CAT_Propietario (' +
+      '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+      '  valor TEXT NOT NULL UNIQUE)');
+    // Sincronizar datos huérfanos de animales hacia CAT_XXX
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_Propietario (valor) ' +
+      'SELECT DISTINCT propietario FROM animales WHERE propietario IS NOT NULL');
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_TIPO (valor) ' +
+      'SELECT DISTINCT tipo FROM animales WHERE tipo IS NOT NULL');
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_LOTE (valor) ' +
+      'SELECT DISTINCT lote FROM animales WHERE lote IS NOT NULL');
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_ESTATUS (valor) ' +
+      'SELECT DISTINCT estatus FROM animales WHERE estatus IS NOT NULL');
+    
     // Solo mostramos mensaje si no es el arranque automatico
     if Sender <> nil then
       ShowMessage('Conexión exitosa a la base de datos SISGAN PRO.');
     
-    LoadCatalogs;
     LoadTables;
   except
     on E: Exception do
       ShowMessage('Error de conexión: ' + E.Message);
-  end;
-end;
-
-procedure TForm1.LoadCatalogs;
-var
-  Qry: TFDQuery;
-  I: Integer;
-begin
-  Qry := TFDQuery.Create(nil);
-  try
-    Qry.Connection := FConnection;
-
-    // 1. Estatus
-    cklFilterEstatus.Items.Clear;
-    cklFilterEstatus.Items.Add('(Todos)');
-    FListEstatus.Clear;
-    try
-      Qry.SQL.Text := 'SELECT DISTINCT estatus FROM animales WHERE estatus IS NOT NULL ORDER BY estatus';
-      Qry.Open;
-      while not Qry.Eof do
-      begin
-        cklFilterEstatus.Items.Add(Qry.Fields[0].AsString);
-        FListEstatus.Add(Qry.Fields[0].AsString);
-        Qry.Next;
-      end;
-      for I := 0 to cklFilterEstatus.Items.Count - 1 do
-        if SameText(cklFilterEstatus.Items[I], 'Vivos') then
-          cklFilterEstatus.Checked[I] := True;
-    except end;
-
-    // 2. Tipos
-    cklFilterTipo.Items.Clear;
-    cklFilterTipo.Items.Add('(Todos)');
-    FListTipo.Clear;
-    try
-      Qry.SQL.Text := 'SELECT DISTINCT tipo FROM animales WHERE tipo IS NOT NULL ORDER BY tipo';
-      Qry.Open;
-      while not Qry.Eof do
-      begin
-        cklFilterTipo.Items.Add(Qry.Fields[0].AsString);
-        FListTipo.Add(Qry.Fields[0].AsString);
-        Qry.Next;
-      end;
-    except end;
-
-    // 3. Lotes
-    cklFilterLote.Items.Clear;
-    cklFilterLote.Items.Add('(Todos)');
-    FListLote.Clear;
-    try
-      Qry.SQL.Text := 'SELECT DISTINCT lote FROM animales WHERE lote IS NOT NULL ORDER BY lote';
-      Qry.Open;
-      while not Qry.Eof do
-      begin
-        cklFilterLote.Items.Add(Qry.Fields[0].AsString);
-        FListLote.Add(Qry.Fields[0].AsString);
-        Qry.Next;
-      end;
-    except end;
-
-    // 4. Propietarios
-    cklFilterPropietario.Items.Clear;
-    cklFilterPropietario.Items.Add('(Todos)');
-    FListPropietario.Clear;
-    try
-      Qry.SQL.Text := 'SELECT DISTINCT propietario FROM animales WHERE propietario IS NOT NULL ORDER BY propietario';
-      Qry.Open;
-      while not Qry.Eof do
-      begin
-        cklFilterPropietario.Items.Add(Qry.Fields[0].AsString);
-        FListPropietario.Add(Qry.Fields[0].AsString);
-        Qry.Next;
-      end;
-    except end;
-
-  finally
-    Qry.Free;
   end;
 end;
 
@@ -341,31 +300,25 @@ begin
   
   TableName := cbTables.Items[cbTables.ItemIndex];
   
-  if FQuery.Active then
-  begin
-    if FCurrentTable <> '' then
-      SaveTableConfig(FCurrentTable);
-    FQuery.Close;
-  end;
-    
+  // Guardar config de la tabla anterior
+  if FQuery.Active and (FCurrentTable <> '') then
+    SaveTableConfig(FCurrentTable);
+
+  FQuery.Close;
+
   FCurrentTable := TableName;
-  
-  // Prevenir error limpiando filtros ANTES de reabrir la nueva tabla 
-  // por si contenía un filtro (ej: estatus = 'Vivos')
   FQuery.Filtered := False;
   FQuery.Filter := '';
   FQuery.IndexFieldNames := '';
   FSortColumn := '';
-  
+
   FQuery.SQL.Text := GetTableSQL(TableName);
-  
-  // Configurar campos persistentes y calcular
   FQuery.Fields.Clear;
   FQuery.FieldDefs.Update;
-  
   for I := 0 to FQuery.FieldDefs.Count - 1 do
     FQuery.FieldDefs[I].CreateField(FQuery);
 
+  // Campo calculado Edad (ANTES de Open, como en el original)
   if SameText(TableName, 'animales') then
   begin
     with TStringField.Create(FQuery) do
@@ -377,7 +330,14 @@ begin
     end;
   end;
 
+  // Asignar evento de propagación para tablas CAT_XXX
+  if GetCATAnimalesField(TableName) <> '' then
+    FQuery.AfterPost := FQueryAfterPost
+  else
+    FQuery.AfterPost := nil;
+
   FQuery.Open;
+  UpdateRecordCount;
 
   // Limpiar filtro y orden al cambiar de tabla
   edtFilter.OnChange := nil;
@@ -389,7 +349,9 @@ begin
   // Agregar a la lista de checks
   for I := 0 to FQuery.FieldCount - 1 do
   begin
-    if SameText(FQuery.Fields[I].FieldName, 'rowid') then
+    if SameText(FQuery.Fields[I].FieldName, 'rowid') or
+       SameText(FQuery.Fields[I].FieldName, 'id') or
+       SameText(FQuery.Fields[I].FieldName, 'id_1') then
     begin
       FQuery.Fields[I].Visible := False;
       Continue;
@@ -409,57 +371,11 @@ begin
     end;
   end;
 
-  // Llenar Lista de Estatus
-  cklFilterEstatus.OnClickCheck := nil;
-  cklFilterEstatus.Items.Clear;
-  cklFilterEstatus.Items.Add('(Todos)');
-  if FListEstatus.Count > 0 then cklFilterEstatus.Items.AddStrings(FListEstatus);
-  
-  // Marcar "Vivos" por defecto
-  for I := 0 to cklFilterEstatus.Items.Count - 1 do
-  begin
-    if SameText(cklFilterEstatus.Items[I], 'Vivos') then
-    begin
-      cklFilterEstatus.Checked[I] := True;
-      Break;
-    end;
-  end;
-  cklFilterEstatus.Enabled := Assigned(FQuery.FindField('estatus'));
-  btnFilterEstatus.Enabled := cklFilterEstatus.Enabled;
-  cklFilterEstatus.OnClickCheck := FilterComboChange;
-
-  // Llenar Lista de Tipo
-  cklFilterTipo.OnClickCheck := nil;
-  cklFilterTipo.Items.Clear;
-  cklFilterTipo.Items.Add('(Todos)');
-  if FListTipo.Count > 0 then cklFilterTipo.Items.AddStrings(FListTipo);
-  cklFilterTipo.Checked[0] := True;
-  for I := 1 to cklFilterTipo.Items.Count - 1 do cklFilterTipo.Checked[I] := True;
-  cklFilterTipo.Enabled := Assigned(FQuery.FindField('tipo'));
-  btnFilterTipo.Enabled := cklFilterTipo.Enabled;
-  cklFilterTipo.OnClickCheck := FilterComboChange;
-
-  // Llenar Lista de Lote
-  cklFilterLote.OnClickCheck := nil;
-  cklFilterLote.Items.Clear;
-  cklFilterLote.Items.Add('(Todos)');
-  if FListLote.Count > 0 then cklFilterLote.Items.AddStrings(FListLote);
-  cklFilterLote.Checked[0] := True;
-  for I := 1 to cklFilterLote.Items.Count - 1 do cklFilterLote.Checked[I] := True;
-  cklFilterLote.Enabled := Assigned(FQuery.FindField('lote'));
-  btnFilterLote.Enabled := cklFilterLote.Enabled;
-  cklFilterLote.OnClickCheck := FilterComboChange;
-
-  // Llenar Lista de Propietario
-  cklFilterPropietario.OnClickCheck := nil;
-  cklFilterPropietario.Items.Clear;
-  cklFilterPropietario.Items.Add('(Todos)');
-  if FListPropietario.Count > 0 then cklFilterPropietario.Items.AddStrings(FListPropietario);
-  cklFilterPropietario.Checked[0] := True;
-  for I := 1 to cklFilterPropietario.Items.Count - 1 do cklFilterPropietario.Checked[I] := True;
-  cklFilterPropietario.Enabled := Assigned(FQuery.FindField('propietario'));
-  btnFilterPropietario.Enabled := cklFilterPropietario.Enabled;
-  cklFilterPropietario.OnClickCheck := FilterComboChange;
+  // Configurar filtros dinámicos por tabla
+  SetupFilterSlot(cklFilterEstatus, btnFilterEstatus, lblFilterEstatus, FListEstatus, GetFilterField(TableName, 0));
+  SetupFilterSlot(cklFilterTipo, btnFilterTipo, lblFilterTipo, FListTipo, GetFilterField(TableName, 1));
+  SetupFilterSlot(cklFilterLote, btnFilterLote, lblFilterLote, FListLote, GetFilterField(TableName, 2));
+  SetupFilterSlot(cklFilterPropietario, btnFilterPropietario, lblFilterPropietario, FListPropietario, GetFilterField(TableName, 3));
 
   // Aplicar filtros iniciales vacíos
   ApplyFilters;
@@ -642,6 +558,7 @@ begin
   end;
   
   FQuery.Refresh;
+  UpdateRecordCount;
 end;
 
 procedure TForm1.btnExportPDFClick(Sender: TObject);
@@ -854,6 +771,137 @@ begin
   end;
 end;
 
+class function TForm1.GetCATTable(const FieldName: string): string;
+begin
+  if SameText(FieldName, 'tipo') then Result := 'CAT_TIPO'
+  else if SameText(FieldName, 'lote') then Result := 'CAT_LOTE'
+  else if SameText(FieldName, 'estatus') then Result := 'CAT_ESTATUS'
+  else if SameText(FieldName, 'propietario') then Result := 'CAT_Propietario'
+  else Result := '';
+end;
+
+class function TForm1.GetCATAnimalesField(const TableName: string): string;
+begin
+  if SameText(TableName, 'CAT_TIPO') then Result := 'tipo'
+  else if SameText(TableName, 'CAT_LOTE') then Result := 'lote'
+  else if SameText(TableName, 'CAT_ESTATUS') then Result := 'estatus'
+  else if SameText(TableName, 'CAT_Propietario') then Result := 'propietario'
+  else Result := '';
+end;
+
+class function TForm1.GetFKField(const TableName: string): string;
+begin
+  if SameText(TableName, 'partos') then Result := 'num_madre'
+  else if SameText(TableName, 'servicios') then Result := 'numero'
+  else if SameText(TableName, 'palpaciones') then Result := 'numero'
+  else if SameText(TableName, 'control_leche') then Result := 'numero_animal'
+  else if SameText(TableName, 'bajas') then Result := 'numero_animal'
+  else Result := '';
+end;
+
+procedure TForm1.SetupFilterSlot(CheckList: TCheckListBox; Button: TButton; LabelCtrl: TLabel; var Values: TStringList; const FieldName: string);
+var
+  Qry: TFDQuery;
+  I: Integer;
+  CATTable, Val: string;
+begin
+  CheckList.OnClickCheck := nil;
+  CheckList.Items.Clear;
+  Values.Clear;
+  CheckList.Visible := False;
+  Button.Enabled := False;
+  LabelCtrl.Visible := False;
+
+  if (FieldName = '') or not FQuery.Active then Exit;
+
+  try
+    Button.Caption := GetFilterLabel(FieldName) + '...';
+    LabelCtrl.Caption := GetFilterLabel(FieldName);
+    Button.Enabled := True;
+    LabelCtrl.Visible := True;
+
+    CATTable := GetCATTable(FieldName);
+    Qry := TFDQuery.Create(nil);
+    try
+      Qry.Connection := FConnection;
+      if (CATTable <> '') and SameText(FCurrentTable, 'animales') then
+      begin
+        if SameText(FieldName, 'lote') then
+          Qry.SQL.Text := 'SELECT DISTINCT valor FROM ' + CATTable +
+            ' WHERE valor IS NOT NULL AND valor != '''' AND valor IN ' +
+            '(SELECT DISTINCT lote FROM animales WHERE estatus = ''Vivos'' AND lote IS NOT NULL AND lote != '''')' +
+            ' UNION SELECT DISTINCT lote FROM animales WHERE lote IS NOT NULL' +
+            ' AND lote != '''' AND lote NOT IN (SELECT valor FROM ' + CATTable + ')' +
+            ' AND estatus = ''Vivos'' ORDER BY 1'
+        else
+          Qry.SQL.Text := 'SELECT DISTINCT valor FROM ' + CATTable +
+            ' WHERE valor IS NOT NULL' +
+            ' UNION SELECT DISTINCT "' + FieldName + '" FROM ' + FCurrentTable +
+            ' WHERE "' + FieldName + '" IS NOT NULL AND "' + FieldName +
+            '" NOT IN (SELECT valor FROM ' + CATTable + ') ORDER BY 1'
+      end
+      else if (SameText(FieldName, 'estatus') or SameText(FieldName, 'propietario')) and
+         not SameText(FCurrentTable, 'animales') then
+      begin
+        CATTable := GetCATTable(FieldName);
+        if CATTable <> '' then
+          Qry.SQL.Text := 'SELECT DISTINCT valor FROM ' + CATTable + ' WHERE valor IS NOT NULL' +
+            ' UNION SELECT DISTINCT a."' + FieldName + '" FROM animales a WHERE a."' + FieldName + '" IS NOT NULL' +
+            ' AND a."' + FieldName + '" NOT IN (SELECT valor FROM ' + CATTable + ')' +
+            ' AND a.numero IN (SELECT ' + GetFKField(FCurrentTable) + ' FROM ' + FCurrentTable + ') ORDER BY 1'
+        else
+          Qry.SQL.Text := 'SELECT DISTINCT a."' + FieldName + '" FROM animales a WHERE a."' + FieldName +
+            '" IS NOT NULL AND a.numero IN (SELECT ' + GetFKField(FCurrentTable) + ' FROM ' +
+            FCurrentTable + ') ORDER BY a."' + FieldName + '"';
+      end
+      else
+        Qry.SQL.Text := 'SELECT DISTINCT "' + FieldName + '" FROM ' + FCurrentTable +
+          ' WHERE "' + FieldName + '" IS NOT NULL ORDER BY "' + FieldName + '"';
+      Qry.Open;
+      while not Qry.Eof do
+      begin
+        Val := Qry.Fields[0].AsString;
+        if SameText(FieldName, 'fecha') and (Length(Val) >= 10) and (Val[5] = '-') then
+          Val := Copy(Val, 9, 2) + '-' + Copy(Val, 6, 2) + '-' + Copy(Val, 1, 4);
+        Values.Add(Val);
+        Qry.Next;
+      end;
+    finally
+      Qry.Free;
+    end;
+
+    CheckList.Items.Add('(Todos)');
+    CheckList.Items.AddStrings(Values);
+    CheckList.Checked[0] := True;
+
+    if SameText(FieldName, 'estatus') then
+    begin
+      for I := 0 to CheckList.Items.Count - 1 do
+        if SameText(CheckList.Items[I], 'Vivos') then
+        begin
+          CheckList.Checked[I] := True;
+          Break;
+        end;
+    end
+    else
+      for I := 1 to CheckList.Items.Count - 1 do
+        CheckList.Checked[I] := True;
+
+    CheckList.OnClickCheck := FilterComboChange;
+
+  except
+    on E: Exception do
+    begin
+      CheckList.OnClickCheck := nil;
+      CheckList.Items.Clear;
+      Values.Clear;
+      CheckList.Visible := False;
+      Button.Enabled := False;
+      LabelCtrl.Visible := False;
+    end;
+  end;
+end;
+
 procedure TForm1.ApplyFilters;
 var
   FilterStrs: TStringList;
@@ -865,8 +913,10 @@ var
       J: Integer;
       SubFilter: string;
       AllChecked: Boolean;
+      FVal: string;
     begin
       Result := '';
+      if CheckList.Items.Count = 0 then Exit;
       SubFilter := '';
       AllChecked := CheckList.Checked[0];
       if not AllChecked then
@@ -876,7 +926,10 @@ var
           if CheckList.Checked[J] then
           begin
             if SubFilter <> '' then SubFilter := SubFilter + ',';
-            SubFilter := SubFilter + '''' + CheckList.Items[J] + '''';
+            FVal := CheckList.Items[J];
+            if SameText(FieldName, 'fecha') and (Length(FVal) >= 10) and (FVal[3] = '-') then
+              FVal := Copy(FVal, 7, 4) + '-' + Copy(FVal, 4, 2) + '-' + Copy(FVal, 1, 2);
+            SubFilter := SubFilter + '''' + FVal + '''';
           end;
         end;
         
@@ -888,7 +941,13 @@ var
       end;
     end;
 
+var
+  FilterCheckLists: array[0..3] of TCheckListBox;
 begin
+  FilterCheckLists[0] := cklFilterEstatus;
+  FilterCheckLists[1] := cklFilterTipo;
+  FilterCheckLists[2] := cklFilterLote;
+  FilterCheckLists[3] := cklFilterPropietario;
   if not FQuery.Active then Exit;
 
   FilterStrs := TStringList.Create;
@@ -914,28 +973,10 @@ begin
         FilterStrs.Add('(' + GlobalFilter + ')');
     end;
 
-    // 2. Filtros específicos exactos (CheckLists con soporte multi-seleccion)
-    if Assigned(FQuery.FindField('estatus')) then
+    // 2. Filtros específicos exactos dinámicos por tabla
+    for I := 0 to 3 do
     begin
-      FinalFilter := GetMultiFilter(cklFilterEstatus, 'estatus');
-      if FinalFilter <> '' then FilterStrs.Add(FinalFilter);
-    end;
-    
-    if Assigned(FQuery.FindField('tipo')) then
-    begin
-      FinalFilter := GetMultiFilter(cklFilterTipo, 'tipo');
-      if FinalFilter <> '' then FilterStrs.Add(FinalFilter);
-    end;
-    
-    if Assigned(FQuery.FindField('lote')) then
-    begin
-      FinalFilter := GetMultiFilter(cklFilterLote, 'lote');
-      if FinalFilter <> '' then FilterStrs.Add(FinalFilter);
-    end;
-    
-    if Assigned(FQuery.FindField('propietario')) then
-    begin
-      FinalFilter := GetMultiFilter(cklFilterPropietario, 'propietario');
+      FinalFilter := GetMultiFilter(FilterCheckLists[I], GetFilterField(FCurrentTable, I));
       if FinalFilter <> '' then FilterStrs.Add(FinalFilter);
     end;
 
@@ -962,6 +1003,47 @@ begin
   finally
     FilterStrs.Free;
   end;
+  UpdateRecordCount;
+end;
+
+procedure TForm1.UpdateRecordCount;
+begin
+  if Assigned(lblRecordCount) then
+  begin
+    if FQuery.Active then
+      lblRecordCount.Caption := 'Registros: ' + FormatFloat('#,##0', FQuery.RecordCount)
+    else
+      lblRecordCount.Caption := 'Registros: 0';
+  end;
+end;
+
+procedure TForm1.FQueryAfterPost(DataSet: TDataSet);
+var
+  AnimalesField, NewVal, OldVal: string;
+  Q: TFDQuery;
+begin
+  AnimalesField := GetCATAnimalesField(FCurrentTable);
+  if AnimalesField = '' then Exit;
+
+  NewVal := DataSet.FieldByName('valor').AsString;
+
+  // Consultar el valor original directamente en la BD (bypasea CachedUpdates)
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := FConnection;
+    Q.SQL.Text := 'SELECT valor FROM ' + FCurrentTable + ' WHERE id = :Id';
+    Q.ParamByName('Id').AsInteger := DataSet.FieldByName('id').AsInteger;
+    Q.Open;
+    if Q.IsEmpty then Exit;
+    OldVal := Q.Fields[0].AsString;
+    if AnsiSameText(OldVal, NewVal) then Exit;
+  finally
+    Q.Free;
+  end;
+
+  FConnection.ExecSQL(
+    'UPDATE animales SET "' + AnimalesField + '" = ' + QuotedStr(NewVal) +
+    ' WHERE "' + AnimalesField + '" = ' + QuotedStr(OldVal));
 end;
 
 procedure TForm1.StartWebServer;
@@ -1220,22 +1302,100 @@ end;
 class function TForm1.GetTableSQL(const TableName: string): string;
 begin
   if SameText(TableName, 'partos') then
-    Result := 'SELECT p.rowid, p.id, p.id_1, p.fecha, p.num_madre, p.num_asignado, p.sexo, p.peso, p.estado, p.raza, p.padre, p.observacion, p.estatus_cria, p.creado_por, p.creado_en, ' +
-      '(SELECT a.nombre FROM animales a WHERE a.numero = p.num_madre) as nom_madre FROM partos p'
+    Result := 'SELECT partos.rowid, partos.*, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = partos.num_madre) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = partos.num_madre) as estatus FROM partos'
   else if SameText(TableName, 'servicios') then
-    Result := 'SELECT s.rowid, s.id, s.id_1, s.fecha, s.numero, s.tipo, s.toro, s.raza_toro, s.creado_por, s.creado_en, ' +
-      '(SELECT a.nombre FROM animales a WHERE a.numero = s.numero) as nombre FROM servicios s'
+    Result := 'SELECT servicios.rowid, servicios.*, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = servicios.numero) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = servicios.numero) as estatus FROM servicios'
   else if SameText(TableName, 'control_leche') then
-    Result := 'SELECT c.rowid, c.id, c.fecha, c.numero_animal, c.kg, c.turno, c.peso_tobo, c.creado_por, c.creado_en, c.id_1, ' +
-      '(SELECT a.nombre FROM animales a WHERE a.numero = c.numero_animal) as nombre_animal FROM control_leche c'
+    Result := 'SELECT control_leche.rowid, control_leche.*, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = control_leche.numero_animal) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = control_leche.numero_animal) as estatus FROM control_leche'
   else if SameText(TableName, 'bajas') then
-    Result := 'SELECT b.rowid, b.numero_animal, b.fecha, b.tipo_baja, b.causa, b.comprador, b.precio_total, b.peso_venta, b.observaciones, b.creado_en, b.id, b.nombre, b.creado_por, b.guia_movilizacion, b.tiene_seguro, b.id_1, ' +
-      '(SELECT a.nombre FROM animales a WHERE a.numero = b.numero_animal) as nombre_animal FROM bajas b'
+    Result := 'SELECT bajas.rowid, bajas.*, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = bajas.numero_animal) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = bajas.numero_animal) as estatus FROM bajas'
   else if SameText(TableName, 'palpaciones') then
-    Result := 'SELECT p.rowid, p.id, p.id_1, p.fecha, p.numero, p.diagnostico, p.observaciones, p.dias_prenez, p.tecnico, p.creado_por, p.creado_en, ' +
-      '(SELECT a.nombre FROM animales a WHERE a.numero = p.numero) as nombre FROM palpaciones p'
+    Result := 'SELECT palpaciones.rowid, palpaciones.*, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = palpaciones.numero) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = palpaciones.numero) as estatus FROM palpaciones'
+  else if SameText(TableName, 'CAT_TIPO') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE tipo = CAT_TIPO.valor) as cantidad FROM CAT_TIPO'
+  else if SameText(TableName, 'CAT_LOTE') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE lote = CAT_LOTE.valor) as cantidad FROM CAT_LOTE'
+  else if SameText(TableName, 'CAT_ESTATUS') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE estatus = CAT_ESTATUS.valor) as cantidad FROM CAT_ESTATUS'
+  else if SameText(TableName, 'CAT_Propietario') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE propietario = CAT_Propietario.valor) as cantidad FROM CAT_Propietario'
   else
     Result := 'SELECT rowid, * FROM ' + TableName;
+end;
+
+class function TForm1.GetFilterField(const TableName: string; Slot: Integer): string;
+begin
+  Result := '';
+  if SameText(TableName, 'animales') then
+    case Slot of
+      0: Result := 'estatus';
+      1: Result := 'tipo';
+      2: Result := 'lote';
+      3: Result := 'propietario';
+    end
+  else if SameText(TableName, 'partos') then
+    case Slot of
+      0: Result := 'estado';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+      3: Result := 'sexo';
+    end
+  else if SameText(TableName, 'servicios') then
+    case Slot of
+      0: Result := 'tipo';
+      1: Result := 'toro';
+      2: Result := 'propietario';
+      3: Result := 'estatus';
+    end
+  else if SameText(TableName, 'bajas') then
+    case Slot of
+      0: Result := 'tipo_baja';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+      3: Result := 'causa';
+    end
+  else if SameText(TableName, 'palpaciones') then
+    case Slot of
+      0: Result := 'diagnostico';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+      3: Result := 'tecnico';
+    end
+  else if SameText(TableName, 'control_leche') then
+    case Slot of
+      0: Result := 'fecha';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+    end
+  else if SameText(TableName, 'queso') then
+    case Slot of
+      0: Result := 'equipo';
+    end;
+end;
+
+class function TForm1.GetFilterLabel(const FieldName: string): string;
+begin
+  if SameText(FieldName, 'fecha') then Result := 'Fecha:'
+  else if SameText(FieldName, 'estado') then Result := 'Estado (Cría):'
+  else if SameText(FieldName, 'estatus_cria') then Result := 'Estatus Cría:'
+  else if SameText(FieldName, 'tipo_baja') then Result := 'Tipo Baja:'
+  else if SameText(FieldName, 'raza_toro') then Result := 'Raza Toro:'
+  else if FieldName <> '' then Result := FieldName + ':'
+  else Result := '';
 end;
 
 class function TForm1.CalcEdadFromFechaStr(const FechaStr: string): string;
@@ -1298,16 +1458,10 @@ end;
 procedure TForm1.FieldGetText(Sender: TField; var Text: string; DisplayText: Boolean);
 var
   S: string;
-  Y, M, D: string;
 begin
   S := Sender.AsString;
   if (Length(S) >= 10) and (S[5] = '-') and (S[8] = '-') then
-  begin
-    Y := Copy(S, 1, 4);
-    M := Copy(S, 6, 2);
-    D := Copy(S, 9, 2);
-    Text := D + '-' + M + '-' + Y;
-  end
+    Text := Copy(S, 9, 2) + '-' + Copy(S, 6, 2) + '-' + Copy(S, 1, 4)
   else
     Text := S;
 end;
@@ -1342,6 +1496,7 @@ begin
                 mtConfirmation, [mbYes, mbNo], 0) = mrYes then
   begin
     FQuery.Delete;
+    UpdateRecordCount;
     
     // Habilitar deshacer por tiempo limitado
     btnUndo.Enabled := True;
@@ -1355,11 +1510,19 @@ begin
   end;
 end;
 
+procedure TForm1.btnAddClick(Sender: TObject);
+begin
+  if not FQuery.Active then Exit;
+  FQuery.Append;
+  DBGrid1.SetFocus;
+end;
+
 procedure TForm1.btnUndoClick(Sender: TObject);
 begin
   if FQuery.Active and FQuery.CachedUpdates then
   begin
     FQuery.UndoLastChange(True); // True para posicionar el cursor en el registro recuperado
+    UpdateRecordCount;
     btnUndo.Enabled := False;
     TimerUndo.Enabled := False;
     
