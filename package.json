@@ -1,0 +1,18 @@
+{
+    "name": "sisgan-pro",
+    "version": "1.0.0",
+    "description": "Sistema de Gestión Ganadera - Versión Unificada",
+    "main": "server.js",
+    "dependencies": {
+        "express": "^4.22.1",
+        "multer": "^1.4.5-lts.1",
+        "node-fetch": "^2.7.0",
+        "sqlite": "^4.2.1",
+        "sqlite3": "^5.1.7",
+        "tesseract.js": "^4.1.4",
+        "xlsx": "^0.18.5"
+    },
+    "scripts": {
+        "start": "node server.js"
+    }
+}
