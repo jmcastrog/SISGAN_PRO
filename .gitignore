@@ -1,43 +1,8 @@
-# Delphi compiled artifacts
-*.exe
-*.dcu
-*.dcuil
-*.dpu
-*.drc
-*.rsm
-*.map
-*.tds
-*.dll
-*.bpl
-*.cbk
-*.~*
-*.bak
-*.obj
-*.hpp
-*.lib
-*.a
-
-# Delphi generated files
-*.identcache
-*.local
-*.projdata
-*.projdata.*
-*.tvsconfig
-*.skincfg
-*.dsk
-
-# Delphi history / recovery
-__history/
-__recovery/
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Ini with local paths (keep sample if needed)
-ViewerSettings.ini
-
-# IDE
-*.suo
-*.user
-*.userosscache
+node_modules/
+uploads/
+*.log
+*.db-shm
+*.db-wal
+server_out.txt
+server_err.txt
+public/

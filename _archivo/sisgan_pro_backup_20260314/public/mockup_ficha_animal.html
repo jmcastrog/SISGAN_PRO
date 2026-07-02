@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha Animal - SISGAN PRO</title>
+    <!-- Use Google Fonts for a modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            /* Green */
+            --secondary-color: #1976d2;
+            /* Blue */
+            --accent-teal: #00bfa5;
+            --accent-orange: #f57c00;
+            --bg-body: #f4f6f8;
+            --bg-card: #ffffff;
+            --border-color: #e0e0e0;
+            --text-main: #333333;
+            --text-muted: #757575;
+            --border-radius: 8px;
+            --radius-pill: 50px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .ficha-container {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            width: 100%;
+            max-width: 1280px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header --- */
+        .ficha-header {
+            background: linear-gradient(to right, #e3f2fd, #bbdefb);
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .ficha-header h2 {
+            font-size: 16px;
+            color: var(--secondary-color);
+            margin: 0;
+            font-weight: 600;
+        }
+
+        /* --- Top Bar Actions --- */
+        .top-bar {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            color: var(--text-muted);
+            border-radius: var(--radius-pill);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: #f5f5f5;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #f9f9f9;
+        }
+
+        .btn-green {
+            background-color: #66bb6a;
+            color: white;
+            border-color: #66bb6a;
+        }
+
+        .btn-green:hover {
+            background-color: #4caf50;
+        }
+
+        .btn-dark {
+            background-color: #37474f;
+            color: white;
+            border-color: #37474f;
+        }
+
+        .btn-dark:hover {
+            background-color: #263238;
+        }
+
+        .tag-status {
+            background-color: var(--accent-teal);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            margin-left: auto;
+        }
+
+        .link-accent {
+            color: var(--accent-orange);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* --- Main Content Grid --- */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2.5fr 2.5fr 2fr 2fr;
+            gap: 20px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        /* --- Form Elements --- */
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            width: 130px;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .form-label.blue {
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .form-label.green {
+            color: var(--primary-color);
+        }
+
+        .form-label.orange {
+            color: var(--accent-orange);
+        }
+
+        .form-control {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .form-control.disabled {
+            background-color: #f5f5f5;
+            color: var(--text-muted);
+        }
+
+        .input-icon-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        /* Radio & Checkbox rows */
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            accent-color: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        .section-title {
+            color: #81c784;
+            /* Light green */
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            margin-top: 5px;
+        }
+
+        .section-title.center {
+            text-align: center;
+        }
+
+        /* --- Column 1: Core Data --- */
+        .col-1 {}
+
+        /* --- Column 2: Genealogia --- */
+        .col-2 {
+            border-left: 1px dotted var(--border-color);
+            padding-left: 20px;
+        }
+
+        .checkbox-row {
+            margin-left: 130px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* --- Column 3: Registros --- */
+        .col-3 {
+            border-left: 1px dotted var(--border-color);
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .registro-list {
+            list-style: none;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .registro-list li {
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .registro-list li:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        .comentarios-box {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            height: 120px;
+            padding: 10px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .comentarios-header {
+            color: #81c784;
+            font-weight: 500;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hierro-info {
+            margin-top: 15px;
+            font-size: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+
+        /* --- Column 4: ID & Acciones --- */
+        .col-4 {
+            border-left: 1px solid var(--border-color);
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .action-icons-grid {
+            display: flex;
+            justify-content: space-around;
+            margin-top: auto;
+            padding-top: 20px;
+        }
+
+        .action-icon-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .action-icon-box:hover {
+            transform: translateY(-3px);
+        }
+
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: 2px solid #81c784;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #4caf50;
+        }
+
+        .action-icon-box span {
+            font-size: 11px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* --- Footer Actions --- */
+        .footer-bar {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .footer-btns-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .footer-btns-right {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-footer {
+            padding: 8px 15px;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-main);
+            transition: background 0.2s;
+        }
+
+        .btn-footer:hover {
+            background-color: #f0f0f0;
+        }
+
+        .btn-footer i {
+            color: var(--accent-orange);
+        }
+
+        /* Icons in orange like the image */
+
+        .btn-nav {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--accent-orange);
+            font-weight: bold;
+        }
+
+        .btn-nav:hover {
+            background-color: #f0f0f0;
+        }
+
+        .hint-icon {
+            color: #ffd54f;
+            cursor: help;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="ficha-container">
+        <!-- Header Title -->
+        <div class="ficha-header">
+            <h2>Ficha Animal</h2>
+        </div>
+
+        <!-- Top Action Bar -->
+        <div class="top-bar">
+            <button class="btn" disabled>Nacimiento</button>
+            <button class="btn btn-green">Compra</button>
+            <button class="btn" disabled>Editar Animal</button>
+            <button class="btn" disabled>Regist. Grupal</button>
+
+            <div class="tag-status">Categoria: Vacia</div>
+            <a href="#" class="link-accent"><i class="fa-solid fa-cow"></i> Ver más</a>
+
+            <button class="btn btn-dark"><i class="fa-solid fa-graduation-cap"></i> Iniciar Tour</button>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-content">
+
+            <!-- Column 1: Core Info -->
+            <div class="col-1">
+                <div class="form-group">
+                    <label class="form-label blue">Codigo Animal</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="CG351" readonly>
+                        <label class="radio-item orange" style="margin-left:5px;"><input type="checkbox" checked> Editar
+                            Codigo</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre Animal</label>
+                    <input type="text" class="form-control" value="">
+                </div>
+                <div class="form-group">
+                    <label class="form-label blue">Fecha Nacimiento</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="01/07/2020">
+                        <button class="icon-btn"><i class="fa-regular fa-calendar-days"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fecha Compra</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="29/07/2022">
+                        <button class="icon-btn"><i class="fa-regular fa-calendar-days"></i></button>
+                    </div>
+                </div>
+
+                <div class="section-title">Sexo</div>
+                <div class="form-group">
+                    <div class="radio-group" style="padding-left:10px;">
+                        <label class="radio-item"><input type="radio" name="sexo"> Macho</label>
+                        <label class="radio-item"><input type="radio" name="sexo" checked> Hembra</label>
+                        <label class="radio-item"><input type="radio" name="sexo"> Pajuela</label>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:-5px; padding-left:10px;">
+                    <label class="radio-item"><input type="checkbox"> de Monta</label>
+                </div>
+
+                <div class="section-title">Ubicacion</div>
+                <div class="form-group">
+                    <label class="form-label">Potrero</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="PH1">
+                        <button class="icon-btn" style="color:#455a64;"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lote</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="L1">
+                        <button class="icon-btn" style="color:#455a64;"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Grupo</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="">
+                        <button class="icon-btn" style="color:#455a64;"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:15px; display:flex; gap: 5px;">
+                    <i class="fa-regular fa-lightbulb hint-icon"></i>
+                    <label class="radio-item"><input type="checkbox"> Animal seleccionado para descarte</label>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-right:20px;">
+                    <div>
+                        <div class="section-title">Salud</div>
+                        <div class="radio-group" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                            <label class="radio-item"><input type="radio" name="salud" checked> Sano</label>
+                            <label class="radio-item"><input type="radio" name="salud"> Enfermo</label>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="section-title">Estado Actual</div>
+                        <div class="radio-group"
+                            style="flex-direction:row; align-items:flex-start; flex-wrap: wrap; gap:10px;">
+                            <label class="radio-item"><input type="radio" name="estado" checked> Activo</label>
+                            <label class="radio-item"><input type="radio" name="estado"> Vendido</label>
+                            <label class="radio-item"><input type="radio" name="estado"> Muerto</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 10px; font-size: 13px;">Comentarios</div>
+                <div style="margin-top: 15px; font-size: 12px; color: var(--secondary-color);">* Datos Requeridos</div>
+            </div>
+
+            <!-- Column 2: Lineage & History -->
+            <div class="col-2">
+                <div class="section-title" style="margin-top:0;">Madre</div>
+                <div class="form-group">
+                    <label class="form-label">Cod. Madre</label>
+                    <input type="text" class="form-control" value="">
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox"> Transferencia Embrion (TE)
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Donadora</label>
+                    <input type="text" class="form-control disabled" disabled>
+                </div>
+
+                <div class="section-title">Padre <i class="fa-regular fa-lightbulb hint-icon"
+                        style="margin-left:145px;"></i></div>
+                <div class="form-group">
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="padre_tipo" checked> Monta</label>
+                        <label class="radio-item"><input type="radio" name="padre_tipo"> Inseminacion (IA)</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cod. Padre</label>
+                    <input type="text" class="form-control disabled" disabled>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label class="form-label">Raza</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="BRAH ROJO">
+                        <button class="icon-btn" style="color:#455a64;"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-right">Peso Compra</label>
+                    <input type="text" class="form-control" value="35.00" style="text-align:right;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Procedencia</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="">
+                        <button class="icon-btn" style="color:#455a64;"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-right">Precio Compra</label>
+                    <input type="text" class="form-control" value="2,332.00" style="text-align:right;">
+                </div>
+
+                <div class="section-title" style="margin-top: 15px;">Historicos</div>
+                <div style="display:flex; justify-content: space-between;">
+                    <div
+                        style="display:flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--text-main);">
+                        <span>Historico Comentarios</span>
+                        <span>Hist. Cond. Corporal</span>
+                        <span>Hist. Reubicaciones</span>
+                    </div>
+                    <!-- Tree diagram placeholder -->
+                    <div style="background:#f5f5f5; padding:10px; border-radius:8px; text-align:center;">
+                        <span style="font-size:11px; font-weight:600;">Arbol<br>Genealogico</span>
+                        <div style="margin-top:5px; color:#4caf50;"><i class="fa-solid fa-code-fork"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3: Registrations -->
+            <div class="col-3">
+                <div class="section-title center" style="margin-top:0;">Registro de ....</div>
+                <ul class="registro-list">
+                    <li>Servicios</li>
+                    <li>Palpaciones</li>
+                    <li>Partos</li>
+                    <li>Produccion</li>
+                    <li>Peso</li>
+                    <li>Trat./Vacunas</li>
+                    <li>Revisiones Veterinarias</li>
+                </ul>
+
+                <div class="comentarios-header">
+                    <span>Comentarios Ficha Animal</span>
+                    <i class="fa-regular fa-lightbulb hint-icon"></i>
+                </div>
+                <div class="comentarios-box">
+                    <div>Color:</div>
+                    <hr style="border:none; border-top:1px solid #eee;">
+                    <div>Hierro:</div>
+                    <div>Nro. Hierros:</div>
+                    <div>Composicion Racial:</div>
+                </div>
+            </div>
+
+            <!-- Column 4: ID and Extra -->
+            <div class="col-4">
+                <div class="form-group">
+                    <label style="width:110px; font-size:13px;">Id. Electronica</label>
+                    <input type="text" class="form-control" value="33cc3233sds">
+                </div>
+                <div class="form-group">
+                    <label style="width:110px; font-size:13px;">Tipo Explotacion</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="CEBA">
+                        <button class="icon-btn" style="color:#455a64;"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label style="width:110px; font-size:13px;">Calidad Animal</label>
+                    <div class="input-icon-wrapper">
+                        <input type="text" class="form-control" value="COMERCIAL">
+                        <button class="icon-btn" style="color:#455a64;"><i
+                                class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content: space-between; margin-bottom: 20px;">
+                    <div>
+                        <div class="section-title">Inventario</div>
+                        <div class="radio-group" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                            <label class="radio-item"><input type="radio" name="inv" checked> Sin Inventariar</label>
+                            <label class="radio-item"><input type="radio" name="inv"> Inventariado</label>
+                        </div>
+                        <div style="font-size:11px; margin-top:8px;">Fecha Inv.:30/07/2023</div>
+                    </div>
+                    <div>
+                        <div class="section-title">Marcas Animal</div>
+                        <div class="radio-group" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                            <label class="radio-item"><input type="checkbox"> Tatuado</label>
+                            <label class="radio-item"><input type="checkbox"> Herrado</label>
+                            <label class="radio-item"><input type="checkbox"> Descornado</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="justify-content: flex-end; gap: 10px;">
+                    <label style="font-size:13px;">Nro. Pezones</label>
+                    <input type="text" class="form-control" style="max-width:40px;">
+                    <i class="fa-regular fa-lightbulb hint-icon"></i>
+                </div>
+
+                <!-- Action Icons -->
+                <div class="action-icons-grid">
+                    <div class="action-icon-box">
+                        <div class="icon-circle"><i class="fa-solid fa-plus"></i></div>
+                        <span>Info.<br>Adicional</span>
+                    </div>
+                    <div class="action-icon-box">
+                        <div class="icon-circle"><i class="fa-regular fa-image"></i></div>
+                        <span>Imágenes<br>Animal</span>
+                    </div>
+                    <div class="action-icon-box">
+                        <div class="icon-circle"><i class="fa-solid fa-id-card"></i></div>
+                        <span>Datos<br>Registro</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Bottom Action Bar (Footer) -->
+        <div class="footer-bar">
+            <div class="footer-btns-left">
+                <button class="btn-footer"><i class="fa-solid fa-list-check"></i> Programar Tarea</button>
+                <button class="btn-footer"><i class="fa-regular fa-floppy-disk"></i> Grabar</button>
+                <button class="btn-footer"><i class="fa-solid fa-print"></i> Imprimir Ficha</button>
+                <button class="btn-footer"><i class="fa-solid fa-eraser"></i> Borrar</button>
+                <button class="btn-footer"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+                <button class="btn-footer"><i class="fa-solid fa-door-open"></i> Salir</button>
+            </div>
+            <div class="footer-btns-right">
+                <button class="btn-nav"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="btn-nav"><i class="fa-solid fa-backward"></i></button>
+                <button class="btn-nav"><i class="fa-solid fa-forward"></i></button>
+                <button class="btn-nav"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

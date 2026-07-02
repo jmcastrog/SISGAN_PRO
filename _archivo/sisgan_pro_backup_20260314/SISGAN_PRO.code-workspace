@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "SISGAN_PRO",
+			"path": "."
+		},
+		{
+			"name": "ServidorMapora",
+			"path": "../PROYECTOS A2/ServidorMapora"
+		},
+		{
+			"name": "SISGAN_V4",
+			"path": "../../SISGAN_V4"
+		},
+		{
+			"name": "SISGAN_antigravity",
+			"path": "../../SISGAN_antigravity"
+		}
+	],
+	"settings": {}
+}

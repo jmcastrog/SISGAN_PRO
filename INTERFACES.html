@@ -1,0 +1,275 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>SISGAN PRO - Interfaces</title><style>body{font-family:Segoe UI,Arial,sans-serif;max-width:900px;margin:auto;padding:30px;line-height:1.6;color:#333;}h1{color:#0f3b2c;border-bottom:3px solid #0f3b2c;padding-bottom:10px;}h2{color:#1a6b4e;border-bottom:1px solid #ccc;padding-bottom:5px;margin-top:30px;}h3{color:#2a8c6a;margin-top:20px;}h4{color:#333;margin-top:15px;}code{background:#f4f4f4;padding:2px 6px;border-radius:3px;font-size:13px;}pre{background:#f4f4f4;padding:15px;border-radius:8px;overflow-x:auto;}table{border-collapse:collapse;width:100%;margin:15px 0;}th,td{border:1px solid #ddd;padding:8px 12px;text-align:left;}th{background:#0f3b2c;color:#fff;}tr:nth-child(even){background:#f9f9f9;}ul{padding-left:20px;}li{margin:4px 0;}.footer{margin-top:40px;padding-top:15px;border-top:1px solid #ddd;font-size:12px;color:#888;text-align:center;}</style></head><body><h1>Interfaces del Sistema SISGAN PRO</h1>
+
+<hr>
+
+<h2>1. VCL (SisganDBViewer) — Aplicación de Escritorio</h2>
+
+<p><strong>Puerto/Localización:</strong> Ejecutable standalone (<code>SisganDBViewer.exe</code>)  </p>
+<p><strong>Tecnología:</strong> Delphi VCL, FireDAC SQLite  </p>
+<p><strong>Propósito:</strong> Visor/editor de base de datos en modo tabla, control del servicio Windows.</p>
+
+<h3>Funcionalidades</h3>
+
+<h4>1.1 Conexión a Base de Datos</h4>
+<p><ul><li>Se conecta automáticamente al iniciar a <code>sisgan_pro.db</code> (SQLite con WAL).</li></p>
+<li>Busca la BD primero junto al EXE, luego en <code>D:\Proyectos\SISGAN_PRO\data\</code>.</li>
+<li>Crea tablas CAT (CAT_TIPO, CAT_LOTE, CAT_ESTATUS, CAT_Propietario) si no existen, poblándolas desde datos huérfanos en <code>animales</code>.</li>
+<p></ul></p>
+<h4>1.2 Navegación de Tablas</h4>
+<p><ul><li><code>cbTables</code> — ComboBox que lista todas las tablas de la BD (obtenidas de <code>sqlite_master</code>).</li></p>
+<li>Al seleccionar una tabla, carga sus datos con SQL específico según la tabla (joins para <code>partos</code>, <code>servicios</code>, <code>control_leche</code>, <code>bajas</code>, <code>palpaciones</code>).</li>
+<li>Las tablas CAT muestran una columna calculada <code>cantidad</code> (registros en <code>animales</code> que referencian ese valor).</li>
+<p></ul></p>
+<h4>1.3 Grid de Datos (DBGrid1)</h4>
+<p><ul><li>Edición inline directamente en la celda.</li></p>
+<li>PickList desplegable en columnas <code>tipo</code>, <code>lote</code>, <code>estatus</code>, <code>propietario</code> con valores de las tablas CAT.</li>
+<li><code>DBGrid1TitleClick</code> — Click en encabezado ordena asc/desc.</li>
+<li>Ajuste automático de ancho de columnas.</li>
+<li>Fechas en formato <code>dd-mm-yyyy</code>.</li>
+<p></ul></p>
+<h4>1.4 CRUD de Registros</h4>
+<p><ul><li><strong>Agregar</strong> (<code>btnAdd</code>): Agrega un registro vacío al final.</li></p>
+<li><strong>Eliminar</strong> (<code>btnDelete</code>): Confirma con mensaje, elimina y activa Deshacer por 15 segundos.</li>
+<li><strong>Deshacer</strong> (<code>btnUndo</code>): Revierte la última eliminación (ventana de 15s por <code>TimerUndo</code>).</li>
+<li><strong>Aplicar Cambios</strong> (<code>btnRefresh</code>): Persiste todas las ediciones pendientes a la BD (usa <code>ApplyUpdates</code> + <code>CommitUpdates</code>).</li>
+<p></ul></p>
+<h4>1.5 Filtro Global de Texto</h4>
+<p><ul><li><code>edtFilter</code> — Búsqueda libre tipo "type-ahead" que filtra en todos los campos (string, integer, float, date, memo) con <code>LIKE '%texto%'</code>.</li></p>
+<p></ul></p>
+<h4>1.6 Filtros Multi-Select (4 Slots Dinámicos)</h4>
+<p><ul><li>Cuatro botones con checklist popup que cambian según la tabla seleccionada.</li></p>
+<li><code>btnFilterEstatus</code>, <code>btnFilterTipo</code>, <code>btnFilterLote</code>, <code>btnFilterPropietario</code>.</li>
+<li>Cada slot se etiqueta y puebla según la tabla (ej. en <code>animales</code>: Estatus/Tipo/Lote/Propietario; en <code>partos</code>: Estado/Propietario/Estatus/Sexo).</li>
+<li>Lógica AND entre filtros y con el filtro global.</li>
+<li>Para <code>animales.lote</code>, solo muestra valores con <code>estatus = 'Vivos'</code>.</li>
+<p></ul></p>
+<h4>1.7 Panel de Columnas (Personalización)</h4>
+<p><ul><li><code>btnTogglePanel</code> — Muestra/oculta panel lateral izquierdo.</li></p>
+<li><code>chkColumns</code> — Checklist con todas las columnas de la tabla.</li>
+<li style="margin-left:20px;">Check/Uncheck: muestra/oculta la columna.</li>
+<li style="margin-left:20px;">Drag &amp; Drop: reordena columnas.</li>
+<li>Configuración persistida por tabla en <code>ViewerSettings.ini</code>.</li>
+<p></ul></p>
+<h4>1.8 Exportar a PDF</h4>
+<p><ul><li><code>btnExportPDF</code> — Genera un HTML con las columnas visibles y lo abre en el navegador predeterminado para imprimir/guardar como PDF.</li></p>
+<p></ul></p>
+<h4>1.9 Control del Servicio Windows (ServicioSisgan)</h4>
+<p><ul><li><code>btnToggleService</code> — Inicia/Detiene el servicio <code>ServicioSisgan</code> (Horse API en puerto 5001) con elevación de permisos (<code>runas</code>).</li></p>
+<li><code>lblStatus</code> — Muestra "Servicio: ACTIVO" (verde) o "Servicio: DETENIDO" (rojo).</li>
+<li><code>TimerStatus</code> (3s) — Sondea el estado del servicio cada 3 segundos.</li>
+<li><code>ServicioActivo()</code> — Consulta el SCM de Windows para estado real.</li>
+<p></ul></p>
+<h4>1.10 Salida</h4>
+<p><ul><li><code>btnCloseApp</code> ("SALIR") — Cierra la aplicación directamente (sin minimizar a bandeja).</li></p>
+<p></ul></p>
+<h4>1.11 Persistencia</h4>
+<p><ul><li><code>ViewerSettings.ini</code> guarda por tabla: orden de columnas y visibilidad.</li></p>
+<p></ul></p>
+<h4>1.12 Tablas Reconocidas (con SQL personalizado)</h4>
+
+<table><tr><td>Tabla</td><td>FK a <code>animales</code></td><td>Filtros</td><td>Columnas calculadas</td></tr>
+<tr><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td><code>animales</code></td><td>—</td><td>estatus, tipo, lote, propietario</td><td>Edad</td></tr>
+<tr><td><code>partos</code></td><td>num_madre</td><td>estado, propietario, estatus, sexo</td><td>propietario, estatus</td></tr>
+<tr><td><code>servicios</code></td><td>numero</td><td>tipo, toro, propietario, estatus</td><td>propietario, estatus</td></tr>
+<tr><td><code>palpaciones</code></td><td>numero</td><td>diagnostico, propietario, estatus, tecnico</td><td>propietario, estatus</td></tr>
+<tr><td><code>control_leche</code></td><td>numero_animal</td><td>turno, propietario, estatus</td><td>propietario, estatus</td></tr>
+<tr><td><code>bajas</code></td><td>numero_animal</td><td>tipo_baja, propietario, estatus, causa</td><td>propietario, estatus</td></tr>
+<tr><td><code>queso</code></td><td>—</td><td>equipo</td><td>—</td></tr>
+<tr><td><code>CAT_TIPO</code></td><td>—</td><td>—</td><td>cantidad</td></tr>
+<tr><td><code>CAT_LOTE</code></td><td>—</td><td>—</td><td>cantidad</td></tr>
+<tr><td><code>CAT_ESTATUS</code></td><td>—</td><td>—</td><td>cantidad</td></tr>
+<tr><td><code>CAT_Propietario</code></td><td>—</td><td>—</td><td>cantidad</td></tr>
+<p></table></p>
+<hr>
+
+<h2>2. Web Dashboard (Node.js :5000) — SPA</h2>
+
+<p><strong>URL:</strong> <code>http://localhost:5000/</code>  </p>
+<p><strong>Tecnología:</strong> HTML + CSS + JavaScript vanilla, Express.js  </p>
+<p><strong>Propósito:</strong> Dashboard visual y gestión completa del hato desde el navegador.</p>
+
+<h3>Funcionalidades</h3>
+
+<h4>2.1 Autenticación</h4>
+<p><ul><li>Pantalla de login con usuario/contraseña.</li></p>
+<li>Token almacenado en <code>localStorage</code>.</li>
+<li>Usuario por defecto: <code>admin</code> / <code>admin123</code>.</li>
+<p></ul></p>
+<h4>2.2 Navegación (Sidebar)</h4>
+<table><tr><td>Sección</td><td>Descripción</td></tr>
+<tr><td>---</td><td>---</td></tr>
+<tr><td><strong>Dashboard</strong></td><td>Panel de inicio con resumen general</td></tr>
+<tr><td><strong>Animales</strong></td><td>Fichas, buscador, listado completo, alta de nuevos animales</td></tr>
+<tr><td><strong>Control Lechero</strong></td><td>Registro diario de ordeño por turno (mañana/tarde)</td></tr>
+<tr><td><strong>Producción Queso</strong></td><td>Registro de producción de queso con foto y EXIF</td></tr>
+<tr><td><strong>Partos</strong></td><td>Registro de partos con asignación automática de número y ficha</td></tr>
+<tr><td><strong>Reproducción</strong></td><td>Servicios (monta/IA) y palpaciones</td></tr>
+<tr><td><strong>Bajas del Hato</strong></td><td>Registro de muertes, ventas y sacrificios</td></tr>
+<tr><td><strong>Administración</strong></td><td>Edición tipo Excel de tablas (animales, partos, etc.)</td></tr>
+<tr><td><strong>Configuración</strong></td><td>Reglas de categorización dinámicas</td></tr>
+<p></table></p>
+<h4>2.3 Dashboard (sec_inicio)</h4>
+<p><ul><li><strong>Tarjeta Animales</strong>: Total de animales (angosta, una línea).</li></p>
+<li><strong>Tarjeta Producción Últimos 7 Días</strong>: Fila de títulos (Total + días) arriba, datos abajo con leche (lts), queso (kg), y relación lts/kg.</li>
+<li style="margin-left:20px;">API: <code>GET /api/dashboard</code> → <code>{animales, produccion: {diario, queso_total}, proximos, lotes, propietarios}</code>.</li>
+<li><strong>Composición del Hato</strong>: Desglose por Lote y por Propietario con cantidades y porcentajes.</li>
+<li><strong>Próximos Partos</strong>: Tabla con madre y fecha estimada.</li>
+<li><strong>URL de Acceso Externo</strong>: (stub, actualmente no implementado).</li>
+<p></ul></p>
+<h4>2.4 Animales / Fichas (sec_fichas)</h4>
+<p><ul><li><strong>Buscador Rápido</strong>: Input tipo type-ahead que busca por número o nombre (top 15 resultados). Cada resultado tiene botón "Ficha" que abre detalle completo.</li></p>
+<li><strong>Listado Completo</strong>: Tabla con filtros por Sexo, Estatus, Lote, Tipo. Cada fila tiene botón "Ficha".</li>
+<li><strong>Nuevo Animal</strong>: Formulario con número (auto-generado con año + correlativo), nombre, sexo, tipo.</li>
+<li><strong>Ficha Detallada</strong>: Formulario completo con:</li>
+<li style="margin-left:20px;">Fotos (animal y hierro) con previsualización y upload.</li>
+<li style="margin-left:20px;">Campos editables: nombre, raza, lote, tipo, sexo, estatus_repro, estatus, fecha_nac, peso_nacer, madre, padre, propietario, comentarios.</li>
+<li style="margin-left:20px;">Resumen: total partos, total leche, promedio, días pesados.</li>
+<li style="margin-left:20px;">Historial de Partos (tabla).</li>
+<li style="margin-left:20px;">Últimos Pesajes (tabla).</li>
+<li style="margin-left:20px;">Acciones rápidas: +PARTO, +PESAJE.</li>
+<li style="margin-left:20px;">API: <code>GET /api/detalle/:numero</code>, <code>POST /api/registrar-animal</code>.</li>
+<p></ul></p>
+<h4>2.5 Control Lechero (sec_leche)</h4>
+<p><ul><li>Selección de fecha y turno (MAÑANA / TARDE).</li></p>
+<li>Búsqueda de animal (filtrado a lote="ordeño" y estatus=Vivos).</li>
+<li>Ingreso de peso bruto, peso del tobo, cálculo automático de peso neto.</li>
+<li>Soporte para cámara (OCR) para capturar peso desde foto.</li>
+<li>Lista de entradas con total acumulado.</li>
+<li>Borrador persistido en servidor (archivo JSON) para no perder datos.</li>
+<li><code>GRABAR EN BD</code>: Confirma todas las entradas en lote.</li>
+<li>API: <code>POST /api/borrador-leche</code>, <code>POST /api/confirmar-leche</code>.</li>
+<p></ul></p>
+<h4>2.6 Producción Queso (sec_queso)</h4>
+<p><ul><li>Fecha auto-detectada desde metadatos EXIF de la foto.</li></p>
+<li>Turno (MAÑANA/TARDE), peso total, leche usada.</li>
+<li>Foto del equipo de queso con previsualización.</li>
+<li>Detección de duplicados (misma fecha + equipo).</li>
+<li>API: <code>POST /api/registrar-queso</code>.</li>
+<p></ul></p>
+<h4>2.7 Partos (sec_partos)</h4>
+<p><ul><li><strong>Nuevo Parto</strong>: Búsqueda de madre, selección de sexo de cría, padre, estado (Vivo/Muerto), peso al nacer, tipo de evento (Parto/Aborto).</li></p>
+<li style="margin-left:20px;">Asignación automática de número a la cría (año + correlativo) y nombre sugerido ("H de [Madre]" o "M de [Madre]").</li>
+<li style="margin-left:20px;">Si es Aborto → fuerza estado Muerto.</li>
+<li style="margin-left:20px;">Al registrar: crea ficha para la cría (si nació viva) y actualiza madre a "En Lactancia"/"Vacas en Ordeño".</li>
+<li><strong>Partos Recientes</strong>: Lista de últimos 50 partos con códigos de color por estado.</li>
+<li>API: <code>POST /api/registrar-parto</code>.</li>
+<p></ul></p>
+<h4>2.8 Reproducción / Servicios (sec_servicios)</h4>
+<p><ul><li><strong>Monta/Semen</strong>: Registro de servicio (fecha, hembra, tipo, toro).</li></p>
+<li><strong>Palpaciones</strong>: Registro (fecha, hembra, diagnóstico, fecha est. de parto si está preñada, técnico, observaciones).</li>
+<li style="margin-left:20px;">Al registrar: actualiza <code>estatus_repro</code> del animal (Preñada/Vacía) y <code>fecha_parto_est</code>.</li>
+<li><strong>Historial</strong>: Vista unificada (servicios + palpaciones) ordenada por fecha descendente.</li>
+<li>API: <code>POST /api/registrar-servicio</code>, <code>POST /api/registrar-palpacion</code>.</li>
+<p></ul></p>
+<h4>2.9 Bajas del Hato (sec_bajas)</h4>
+<p><ul><li><strong>Registrar Baja</strong>: Fecha, búsqueda de animal, tipo de baja:</li></p>
+<li style="margin-left:20px;"><em>Muerte</em>: causa (7 opciones), seguro (Sí/No).</li>
+<li style="margin-left:20px;"><em>Venta</em>: comprador, precio total, peso venta, guía movilización, precio/kg (cálculo automático).</li>
+<li style="margin-left:20px;"><em>Sacrificio</em>: motivo (4 opciones).</li>
+<li style="margin-left:20px;">Observaciones.</li>
+<li style="margin-left:20px;">Al registrar: actualiza <code>animales.estatus</code> (Muertos/Vendidos/Sacrificados/etc.).</li>
+<li><strong>Historial de Bajas</strong>: Últimos 100 registros.</li>
+<li>API: <code>POST /api/registrar-baja</code>.</li>
+<p></ul></p>
+<h4>2.10 Administración (sec_admin)</h4>
+<p><ul><li>Selector de tabla (6 permitidas: animales, partos, servicios, control_leche, bajas, palpaciones).</li></p>
+<li>Tabla editable tipo Excel con:</li>
+<li style="margin-left:20px;">Celdas contenteditables con guardado individual o por lote.</li>
+<li style="margin-left:20px;">Filtros por columna estilo Excel (checklist de valores únicos).</li>
+<li style="margin-left:20px;">Ordenamiento A-Z / Z-A por columna.</li>
+<li style="margin-left:20px;">Fotos (icono cámara abre modal).</li>
+<li style="margin-left:20px;">Fichas (icono abre ficha detallada).</li>
+<li style="margin-left:20px;">Agregar/Eliminar filas.</li>
+<li style="margin-left:20px;">Auto-clasificación de categoría según reglas configuradas (sugerirCategoria).</li>
+<li>Configuración de columnas visibles (modal con checkboxes, persistido en <code>admin_config.json</code>).</li>
+<li>API: <code>GET /api/tablas/:nombre</code>, <code>POST /api/save-cell</code>, <code>POST /api/borrar-fila</code>, <code>POST /api/agregar-fila</code>.</li>
+<p></ul></p>
+<h4>2.11 Configuración (sec_config)</h4>
+<p><ul><li>Reglas de categorización dinámicas: tabla editable con orden, nombre categoría, sexo, días min/max, meses post-parto, condición de preñez.</li></p>
+<li>Reordenar, editar, agregar, eliminar reglas.</li>
+<li>Guardar todo a <code>POST /api/configuraciones/categorias_animales</code>.</li>
+<li>Modal explicativo "Reglas de Categorización" en lenguaje natural.</li>
+<p></ul></p>
+<h4>2.12 OCR — Reconocimiento de Pesos desde Foto</h4>
+<p><ul><li>Modal accesible desde Control Lechero (botón cámara junto al peso).</li></p>
+<li>Toma/Selecciona foto → envía a <code>POST /api/ocr-peso</code> → Tesseract.js extrae número → lo inserta en el campo.</li>
+<li>Soporte para reintento si tarda demasiado.</li>
+<p></ul></p>
+<h4>2.13 Upload de Fotos</h4>
+<p><ul><li>Fotos de animal y hierro (desde ficha detallada).</li></p>
+<li>Foto de queso (desde producción).</li>
+<li>Almacenadas en <code>uploads/</code>.</li>
+<li>API: <code>POST /api/upload-foto</code>.</li>
+<p></ul></p>
+<hr>
+
+<h2>3. Horse API (:5001) — Backend Delphi Windows Service</h2>
+
+<p><strong>URL:</strong> <code>http://localhost:5001/</code>  </p>
+<p><strong>Tecnología:</strong> Horse (Delphi HTTP framework), FireDAC SQLite  </p>
+<p><strong>Propósito:</strong> API REST CRUD legacy para compatibilidad con el PWA anterior (<code>viewer.html</code>). Sirve datos al VCL y al PWA legacy.</p>
+
+<h3>Funcionalidades</h3>
+
+<h4>3.1 Archivos Estáticos</h4>
+<table><tr><td>Ruta</td><td>Descripción</td></tr>
+<tr><td>---</td><td>---</td></tr>
+<tr><td><code>GET /</code></td><td>Redirige a <code>/viewer.html</code></td></tr>
+<tr><td><code>GET /viewer.html</code></td><td>Sirve el PWA legacy (<code>public/viewer.html</code>)</td></tr>
+<tr><td><code>GET /public/:archivo</code></td><td>Sirve archivos estáticos de <code>public/</code> (CSS, JS, imágenes, fuentes)</td></tr>
+<tr><td><code>GET /manifest.json</code></td><td>Sirve el manifest PWA</td></tr>
+<p></table></p>
+<h4>3.2 Metadatos y Esquema</h4>
+<table><tr><td>Ruta</td><td>Descripción</td></tr>
+<tr><td>---</td><td>---</td></tr>
+<tr><td><code>GET /api/tablas</code></td><td>Lista todas las tablas de la BD</td></tr>
+<tr><td><code>GET /api/esquema/:tabla</code></td><td>Devuelve nombres y tipos de columnas</td></tr>
+<tr><td><code>GET /api/config?table=X</code></td><td>Devuelve configuración de columnas (visibilidad)</td></tr>
+<p></table></p>
+<h4>3.3 CRUD Genérico (Legacy)</h4>
+<table><tr><td>Ruta</td><td>Método</td><td>Descripción</td></tr>
+<tr><td>---</td><td>---</td><td>---</td></tr>
+<tr><td><code>GET /api/data?table=X</code></td><td>GET</td><td>Lee hasta 5000 filas con <code>rowid_internal</code></td></tr>
+<tr><td><code>POST /api/insert</code></td><td>POST</td><td>Inserta fila en cualquier tabla</td></tr>
+<tr><td><code>GET /api/update?table=X&amp;field=F&amp;value=V&amp;id=N</code></td><td>GET</td><td>Actualiza una celda</td></tr>
+<tr><td><code>GET /api/delete?table=X&amp;id=N</code></td><td>GET</td><td>Elimina fila por rowid</td></tr>
+<p></table></p>
+<h4>3.4 CRUD Nombrado (API Style)</h4>
+<table><tr><td>Ruta</td><td>Método</td><td>Descripción</td></tr>
+<tr><td>---</td><td>---</td><td>---</td></tr>
+<tr><td><code>GET /api/datos/:tabla</code></td><td>GET</td><td>Lee hasta 1000 filas con metadatos y filtros. Usa <code>GetTableSQL()</code> para tablas conocidas (joins)</td></tr>
+<tr><td><code>POST /api/actualizar</code></td><td>POST</td><td>Actualiza fila (body JSON: <code>{tabla, rowid, ...campos}</code>)</td></tr>
+<tr><td><code>POST /api/eliminar</code></td><td>POST</td><td>Elimina fila (body JSON: <code>{tabla, rowid}</code>)</td></tr>
+<tr><td><code>GET /api/exportar/:tabla</code></td><td>GET</td><td>Exporta tabla completa como JSON (sin límite)</td></tr>
+<p></table></p>
+<h4>3.5 Negocio / Dashboard</h4>
+<table><tr><td>Ruta</td><td>Descripción</td></tr>
+<tr><td>---</td><td>---</td></tr>
+<tr><td><code>GET /api/catalogs</code></td><td>Valores distintos de CAT_ESTATUS, CAT_TIPO, CAT_LOTE, CAT_Propietario</td></tr>
+<tr><td><code>GET /api/dashboard</code></td><td>Resumen: total animales, leche de hoy, próximos partos (60 días), lotes</td></tr>
+<p></table></p>
+<h3>Middleware</h3>
+<p><ul><li><code>Jhonson</code> — Parseo de JSON en body.</li></p>
+<p></ul></p>
+<h3>Notas</h3>
+<p><ul><li>Las rutas legacy (<code>/api/data</code>, <code>/api/update</code>, <code>/api/delete</code>) usan interpolación de strings para nombres de tabla — riesgo potencial de SQL injection, pero solo accesible localmente.</li></p>
+<li>Las tablas reconocidas (<code>animales</code>, <code>partos</code>, <code>servicios</code>, <code>control_leche</code>, <code>bajas</code>, <code>palpaciones</code>, <code>queso</code>, CAT*) tienen SQL optimizado con subqueries para obtener <code>propietario</code> y <code>estatus</code> desde <code>animales</code>.</li>
+<p></ul></p>
+<hr>
+
+<h2>Resumen de Puertos y Tecnologías</h2>
+
+<table><tr><td>Interfaz</td><td>Puerto</td><td>Tecnología</td><td>Propósito principal</td></tr>
+<tr><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+<tr><td><strong>Web Dashboard (SPA)</strong></td><td><code>:5000</code></td><td>Node.js + Express + HTML/CSS/JS vanilla</td><td>Gestión completa del hato vía navegador</td></tr>
+<tr><td><strong>Horse API (Servicio Windows)</strong></td><td><code>:5001</code></td><td>Delphi Horse + FireDAC</td><td>API CRUD legacy + dashboard endpoint</td></tr>
+<tr><td><strong>VCL (SisganDBViewer)</strong></td><td>—</td><td>Delphi VCL + FireDAC</td><td>Visor/editor en modo tabla, control de servicio</td></tr>
+<p></table></p>
+<p><strong>BD Compartida:</strong> <code>data/sisgan_pro.db</code> (SQLite) — misma base de datos para las 3 interfaces.</p>
+
+<hr>
+
+<h2>Nota sobre datos de ejemplo</h2>
+<p>Si se agregan datos de prueba/simulados (ej. producción de leche/queso de los últimos 7 días), deben restaurarse después de las pruebas para no contaminar la BD real. Se recomienda usar datos en memoria o archivos temporales separados.</p>
+<div class="footer">Documentacion generada - SISGAN PRO</div></body></html>

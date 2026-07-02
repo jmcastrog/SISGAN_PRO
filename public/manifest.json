@@ -1,0 +1,17 @@
+{
+  "name": "SISGAN PRO Mobile",
+  "short_name": "SISGAN",
+  "start_url": "/viewer.html",
+  "display": "standalone",
+  "background_color": "#2c3e50",
+  "theme_color": "#2c3e50",
+  "description": "Sistema de Gestión Ganadera - Visor Móvil",
+  "icons": [
+    {
+      "src": "/public/vaquita.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+
+> sisgan-pro@1.0.0 start
+> node server.js
+
+
+=============================================
+   SISGAN PRO - Iniciando servidor...
+=============================================
+  Base de datos: OK (D:\Proyectos\SISGAN_PRO\sisgan_pro.db)
+  Tablas: OK
+  Usuario admin: OK
+  OCR Tesseract: Listo
+
+  =============================================
+  SERVIDOR SISGAN PRO ACTIVO
+  =============================================
+  URL LOCAL:     http://localhost:5000
+  URL WIFI:      http://192.168.1.104:5000
+  URL TAILSCALE: http://100.65.222.17:5000 (Acceso Remoto)
+  =============================================
+  Usuario: admin
+  Clave:   admin123
+  =============================================

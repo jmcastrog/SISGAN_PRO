@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SISGAN PRO - Hacienda La Mapora</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- PANTALLA DE LOGUEO -->
+    <div id="login_screen">
+        <div class="login-box">
+            <h1
+                style="display:flex;align-items:center;justify-content:center;gap:15px; color:var(--sidebar-bg); margin-bottom: 30px;">
+                <i class="fas fa-horse-head"></i> LA MAPORA
+            </h1>
+            <input type="text" id="log_user" placeholder="Usuario">
+            <input type="password" id="log_pass" placeholder="Contraseña">
+            <p id="log_error" style="color:var(--danger);font-size:13px;margin-bottom:15px;"></p>
+            <button onclick="intentarLogin()">INGRESAR AL SISTEMA</button>
+        </div>
+    </div>
+
+    <!-- CUERPO PRINCIPAL DE LA APLICACIÓN -->
+    <div id="app" style="display: contents;">
+
+        <!-- Mobile Header (Only visible on small screens) -->
+        <div class="mobile-header">
+            <i class="fas fa-bars fa-lg" onclick="toggleNav()" style="cursor: pointer;"></i>
+            <h3 style="margin:0; font-weight: 800;">SISGAN V5</h3>
+            <i class="fas fa-sync-alt" onclick="location.reload()" style="cursor: pointer;"></i>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div id="mySidebar" class="sidebar">
+            <div class="sidebar-header">
+                SISGAN V5
+            </div>
+            <div class="sidebar-menu">
+                <a href="#" onclick="mostrarSeccion('sec_inicio')" class="nav-item" id="nav_inicio">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_fichas')" class="nav-item" id="nav_fichas">
+                    <i class="fas fa-cow"></i> Animales
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_leche')" class="nav-item">
+                    <i class="fas fa-tint"></i> Control Lechero
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_queso')" class="nav-item">
+                    <i class="fas fa-cheese"></i> Producción Queso
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_partos')" class="nav-item">
+                    <i class="fas fa-baby-carriage"></i> Partos
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_admin')" class="nav-item">
+                    <i class="fas fa-database"></i> Administración
+                </a>
+            </div>
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()"
+                    style="color:var(--danger); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+
+            <!-- SECCIÓN INICIO -->
+            <section id="sec_inicio" class="seccion activa">
+                <div class="section-header">
+                    <h1 class="section-title">Dashboard</h1>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-cow"
+                            style="font-size: 32px; color: var(--primary-dark); margin-bottom: 10px;"></i>
+                        <h2 id="st_animales" style="margin:0;">--</h2>
+                        <p
+                            style="color:var(--text-muted); margin:5px 0 0 0; font-size: 14px; text-transform: uppercase; font-weight: 700;">
+                            Animales</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-tint"
+                            style="font-size: 32px; color: var(--secondary); margin-bottom: 10px;"></i>
+                        <h2 id="st_leche" style="margin:0;">--</h2>
+                        <p
+                            style="color:var(--text-muted); margin:5px 0 0 0; font-size: 14px; text-transform: uppercase; font-weight: 700;">
+                            Leche Hoy</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-clock"></i> Próximos Partos</h3>
+                    <div class="table-container">
+                        <table id="tbl_proximos">
+                            <thead>
+                                <tr>
+                                    <th>Madre</th>
+                                    <th>Fecha Est.</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tunnel_url_box"
+                    style="margin-top:20px; font-size:12px; color:var(--secondary); display:none; text-align: center; background: #ebf4ff; padding: 10px; border-radius: 8px;">
+                    <b>ACCESO EXTERNO:</b> <span id="tunnel_url">...</span>
+                </div>
+            </section>
+
+            <!-- SECCIÓN FICHAS -->
+            <section id="sec_fichas" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title">Animales</h1>
+                    <button class="btn-new" onclick="tabFichas('nuevo')">
+                        <i class="fas fa-plus"></i> Nuevo
+                    </button>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <button id="tab_f_buscar" onclick="tabFichas('buscar')" class="btn-opcion activo">BUSCADOR</button>
+                    <button id="tab_f_todo" onclick="tabFichas('todo')" class="btn-opcion">LISTADO COMPLETO</button>
+                </div>
+
+                <div id="f_buscar_area">
+                    <div class="card">
+                        <input type="text" id="f_bus" class="input-busqueda" placeholder="Buscar por número o nombre..."
+                            oninput="filtrarFichas()">
+
+                        <div class="table-container" id="f_tabla_container" style="display:none;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Num</th>
+                                        <th>Nombre</th>
+                                        <th>Sexo</th>
+                                        <th>Raza</th>
+                                        <th>Salud</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="f_resultados"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÁREA TODO -->
+                <div id="f_todo_area" style="display:none;">
+                    <div class="card">
+                        <div
+                            style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin:0;"><i class="fas fa-list"></i> Todos los Animales</h3>
+                            <span id="f_todo_count" class="badge-status status-sano"
+                                style="background: var(--sidebar-bg);">0 animales</span>
+                        </div>
+
+                        <!-- Filtros -->
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; margin-bottom:25px; background: var(--bg); padding: 20px; border-radius: 12px;">
+                            <div class="form-group">
+                                <label>Sexo:</label>
+                                <select id="filt_sexo" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Estatus:</label>
+                                <select id="filt_estatus" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Lote:</label>
+                                <select id="filt_lote" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo:</label>
+                                <select id="filt_tipo" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Num</th>
+                                        <th>Nombre</th>
+                                        <th>Sexo</th>
+                                        <th>Raza</th>
+                                        <th>Lote</th>
+                                        <th>Tipo</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="f_todo_resultados"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÁREA NUEVO ANIMAL -->
+                <div id="f_nuevo_area" style="display:none;">
+                    <div class="card">
+                        <h3 style="margin-bottom:20px;"><i class="fas fa-plus-circle"></i> Registrar Nuevo Animal</h3>
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; margin-bottom:20px;">
+                            <div class="form-group">
+                                <label>Número / Arete</label>
+                                <div style="display:flex; gap:10px;">
+                                    <input type="text" id="n_numero" class="input-busqueda" placeholder="Ej: 24001"
+                                        style="margin-bottom:0;">
+                                    <button class="btn-new" style="width:60px; background:var(--sidebar-bg);"
+                                        onclick="generarProximoNumero()"><i class="fas fa-magic"></i></button>
+                                </div>
+                            </div>
+                            <div class="form-group"><label>Nombre</label><input type="text" id="n_nombre"
+                                    class="input-busqueda" placeholder="Nombre" style="margin-bottom:0;"></div>
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="n_sexo" class="input-busqueda" style="margin-bottom:0;">
+                                    <option value="Hembra">Hembra</option>
+                                    <option value="Macho">Macho</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="n_tipo" class="input-busqueda" style="margin-bottom:0;">
+                                    <option>Vaca</option>
+                                    <option>Novilla</option>
+                                    <option>Macho</option>
+                                    <option>Maute</option>
+                                    <option>Becerro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-new" onclick="guardarNuevoAnimal()"
+                            style="width:100%; justify-content:center; height:50px; font-size:16px;">
+                            <i class="fas fa-check-circle"></i> CREAR FICHA BÁSICA
+                        </button>
+                    </div>
+                </div>
+
+                <div id="f_detalle_area" style="display:none;">
+                    <button class="btn-opcion" style="margin-bottom:20px;" onclick="volverALista()"><i
+                            class="fas fa-arrow-left"></i> VOLVER</button>
+                    <div id="f_detalle_content" class="card"></div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN LECHE -->
+            <section id="sec_leche" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title">Control Lechero</h1>
+                </div>
+                <div class="card">
+                    <div class="form-group" style="position:relative;">
+                        <label>Vaca:</label>
+                        <input type="text" id="l_bus" class="input-busqueda" placeholder="Escribe nro o nombre..."
+                            oninput="sugerir('vaca', 'l')">
+                        <div id="sug_l" class="suggestion-box"
+                            style="display:none; position: absolute; background: white; border: 1px solid #ddd; width: 100%; border-radius: 8px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+                    <div id="l_sel_box"
+                        style="background:#f0f9ff; padding:15px; border-radius:10px; margin-bottom:20px; display:none; border-left: 5px solid var(--secondary); color: #0369a1;">
+                        <b>Seleccionada:</b> <span id="l_sel_nom"></span>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom:20px;">
+                        <button id="btn_m" class="btn-opcion activo" onclick="setOrdeño('M')"><i class="fas fa-sun"></i>
+                            MAÑANA</button>
+                        <button id="btn_t" class="btn-opcion" onclick="setOrdeño('T')"><i class="fas fa-cloud-moon"></i>
+                            TARDE</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Peso con Tobo (kg):</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="number" id="l_peso" step="0.1" class="input-busqueda"
+                                style="font-size:32px; font-weight:bold; height:70px; margin-bottom:0;">
+                            <button class="btn-new" style="width:80px; background:var(--sidebar-bg);"
+                                onclick="abrirOCR('l_peso')"><i class="fas fa-camera fa-lg"></i></button>
+                        </div>
+                    </div>
+                    <button class="btn-new"
+                        style="width:100%; height:60px; font-size:18px; justify-content: center; margin-top: 20px;"
+                        onclick="registrarLeche()">REGISTRAR PESAJE</button>
+                </div>
+            </section>
+
+            <!-- SECCIÓN QUESO -->
+            <section id="sec_queso" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title">Producción Queso</h1>
+                </div>
+                <div class="card">
+                    <div class="form-group">
+                        <label>Turno:</label>
+                        <input type="text" id="q_turno" value="MAÑANA" class="input-busqueda">
+                    </div>
+                    <div class="form-group">
+                        <label>Peso Total (kg):</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="number" id="q_peso" step="0.01" class="input-busqueda"
+                                style="font-size:32px; font-weight:bold; height:70px; margin-bottom:0;">
+                            <button class="btn-new" style="width:80px; background:var(--sidebar-bg);"
+                                onclick="abrirOCR('q_peso')"><i class="fas fa-camera fa-lg"></i></button>
+                        </div>
+                    </div>
+                    <button class="btn-new"
+                        style="width:100%; height:60px; font-size:18px; justify-content: center; background:var(--accent); margin-top: 20px;"
+                        onclick="registrarQueso()">REGISTRAR QUESO</button>
+                </div>
+            </section>
+
+            <!-- SECCIÓN PARTOS -->
+            <section id="sec_partos" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title">Historial de Partos</h1>
+                    <button class="btn-new" onclick="mostrarSeccion('sec_admin'); cargarTablaAdmin('partos')">
+                        <i class="fas fa-plus"></i> REGISTRAR O GESTIONAR
+                    </button>
+                </div>
+                <div class="card">
+                    <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px;">Listado de los últimos
+                        partos registrados. Puedes editarlos directamente o confirmarlos.</p>
+                    <div id="partos_lista_container" class="table-container">
+                        <!-- Aquí cargaremos una vista rápida similar a la de Administración pero filtrada -->
+                        <table id="tbl_partos_lista">
+                            <thead id="partos_lista_th"></thead>
+                            <tbody id="partos_lista_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN ADMIN -->
+            <section id="sec_admin" class="seccion">
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="tab-controls" style="display:flex; gap:10px; align-items:center;">
+                        <h3 style="margin:0;"><i class="fas fa-database"></i> Datos de Tablas</h3>
+                        <select id="admin_tablas" class="btn-opcion" style="flex:1;"
+                            onchange="cargarTablaAdmin(this.value)">
+                            <option value="animales">Animales</option>
+                            <option value="control_leche">Control Leche</option>
+                            <option value="partos">Partos</option>
+                            <option value="servicios">Servicios</option>
+                            <option value="palpaciones">Palpaciones</option>
+                            <option value="queso">Producción Queso</option>
+                        </select>
+                        <button class="btn-opcion" onclick="abrirConfigAdmin()" title="Ajustes de Columnas">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div id="admin_save_bar"
+                        style="display:none; background: #fffbeb; border: 1px solid #fcd34b; padding: 10px; border-radius: 8px; margin-bottom: 15px; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 13px; color: #92400e; font-weight: 600;">Hay cambios sin guardar</span>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-new" style="background:#059669; padding: 5px 15px; font-size:12px;"
+                                onclick="guardarCambiosLote()">GUARDAR TODO</button>
+                            <button class="btn-opcion" style="padding: 5px 15px; font-size:12px;"
+                                onclick="cargarTablaAdmin(document.getElementById('admin_tablas').value)">DESCARTAR</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap: wrap; align-items: center;">
+                        <button class="btn-new" style="flex:1; height:40px; font-size:14px; justify-content: center;"
+                            onclick="agregarFilaAdmin()">
+                            <i class="fas fa-plus"></i> AGREGAR FILA
+                        </button>
+                        <div id="admin_sort_box" style="display:flex; gap:10px; align-items: center;">
+                            <label
+                                style="font-size:12px; font-weight:bold; color:var(--text-main); margin-left:10px;">Orden:</label>
+                            <select id="admin_sort_col"
+                                onchange="cargarTablaAdmin(document.getElementById('admin_tablas').value)"
+                                class="btn-opcion" style="height:35px; padding:0 10px;">
+                                <option value="rowid" selected>Más Recientes</option>
+                                <option value="numero">Número (A-Z)</option>
+                                <option value="nombre">Nombre (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="tbl_admin" style="font-size:12px;">
+                            <thead id="admin_th"></thead>
+                            <tbody id="admin_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- MODAL OCR (Peso) -->
+    <div id="modal_ocr"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:5000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div
+            style="background:white; padding:25px; border-radius:20px; width:100%; max-width:400px; position:relative;">
+            <span style="position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#999;"
+                onclick="cerrarOCR()">&times;</span>
+            <h3 style="margin-top:0;">Captura de Peso</h3>
+            <div class="ocr-preview" id="ocr_prev"><i class="fas fa-camera fa-4x" style="color:#ddd;"></i></div>
+            <div id="ocr_loading" style="display:none; text-align:center; padding:15px;">
+                <i class="fas fa-spinner fa-spin fa-2x"
+                    style="color:var(--primary);"></i><br><small>Procesando...</small>
+            </div>
+            <label class="btn-buscar">
+                <i class="fas fa-camera"></i> TOMAR FOTO
+                <input type="file" accept="image/*" capture="environment" style="display:none;"
+                    onchange="procesarFoto(event)">
+            </label>
+        </div>
+    </div>
+
+    <!-- MODAL EVENTO RÁPIDO (+Parto, +Pesaje) -->
+    <div id="modal_evento"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4000; align-items:center; justify-content:center; padding:20px;">
+        <div class="card" style="width:100%; max-width:450px; position:relative;">
+            <span style="position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#999;"
+                onclick="cerrarModalRapido()">&times;</span>
+            <h3 id="m_titulo" style="margin-top:0; color:var(--primary);">Registrar Evento</h3>
+            <p id="m_info" style="font-weight:bold; margin-bottom:20px;"></p>
+
+            <!-- Inputs para Parto -->
+            <div id="m_parto_inputs" style="display:none;">
+                <div class="form-group"><label>Fecha Parto</label><input type="date" id="m_fecha_p"
+                        class="input-busqueda"></div>
+                <div class="form-group"><label>Número Cría</label><input type="text" id="m_cria_num"
+                        class="input-busqueda" placeholder="Ej: 24050"></div>
+                <div class="form-group">
+                    <label>Sexo Cría</label>
+                    <select id="m_cria_sexo" class="input-busqueda">
+                        <option value="Hembra">Hembra</option>
+                        <option value="Macho">Macho</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Inputs para Pesaje -->
+            <div id="m_leche_inputs" style="display:none;">
+                <div class="form-group">
+                    <label>Peso (kg)</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="m_peso" step="0.1" class="input-busqueda"
+                            style="font-size:24px; font-weight:bold;">
+                        <button class="btn-new" style="width:60px; background:var(--sidebar-bg);"
+                            onclick="abrirOCR('m_peso')"><i class="fas fa-camera"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-new" onclick="registrarEventoRapido()"
+                style="width:100%; justify-content:center; height:50px; margin-top:10px;">
+                <i class="fas fa-save"></i> GUARDAR EVENTO
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIGURACIÓN ADMIN -->
+    <div id="modal_admin_config"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:5000; align-items:center; justify-content:center; padding:20px;">
+        <div
+            style="background:white; padding:25px; border-radius:20px; width:100%; max-width:450px; position:relative;">
+            <span style="position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#999;"
+                onclick="cerrarConfigAdmin()">&times;</span>
+            <h3 style="margin-top:0;">Configurar Columnas</h3>
+            <p style="font-size:14px; color:#666; margin-bottom:20px;">Selecciona las columnas que deseas ver en la
+                tabla.</p>
+            <div id="admin_config_list"
+                style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; max-height:300px; overflow-y:auto; padding-right:10px; margin-bottom:20px;">
+                <!-- Checkboxes cargados por JS -->
+            </div>
+            <button class="btn-new" onclick="guardarConfigAdmin()"
+                style="width:100%; justify-content:center; height:50px; font-size:16px;">
+                <i class="fas fa-save"></i> GUARDAR CONFIGURACIÓN
+            </button>
+        </div>
+    </div>
+
+    <!-- DROP DOWN DE FILTRO ESTILO EXCEL -->
+    <div id="admin_filter_dropdown" class="admin-filter-dropdown">
+        <input type="text" class="admin-filter-search" placeholder="Buscar..."
+            oninput="filtrarListaValoresUnicos(this.value)">
+        <div class="admin-filter-list" id="admin_filter_list">
+            <!-- Valores cargados por JS -->
+        </div>
+        <div style="display:flex; justify-content: space-between; gap:5px; margin-top:5px;">
+            <button class="btn-new" style="flex:1; font-size:10px; padding:4px;"
+                onclick="aplicarFiltroColumna()">ACEPTAR</button>
+            <button class="btn-new" style="flex:1; font-size:10px; padding:4px; background:#94a3b8;"
+                onclick="cerrarFiltroColumna()">CANCELAR</button>
+        </div>
+    </div>
+
+    <script>
+        /* 
+           VARIABLES DE ESTADO
+           Aquí guardamos información que la app necesita recordar mientras está abierta.
+        */
+        let token = localStorage.getItem('s_pro_token'); // El "pase de entrada" del usuario
+        let currentUser = null;    // Datos del usuario que inició sesión
+        let listaAnimales = [];    // La lista resumida para el buscador (solo número y nombre)
+        let listaAnimalesCompleta = []; // NUEVO: Contiene todos los datos para filtros avanzados
+        let ordeñoActual = 'M';    // 'M' para Mañana, 'T' para Tarde
+        let selAnimal = null;      // El animal que tenemos seleccionado actualmente
+        let ocrTarget = null;      // Cuál campo de texto recibirá el peso detectado por la cámara
+
+        /* 
+           NUEVA FUNCIÓN DE FILTRO: formatearFecha
+           Convierte '2026-02-28' en '28-feb-2026' para todo el sistema.
+        */
+        function formatearFecha(dateStr) {
+            if (!dateStr) return '-';
+            const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+            // Forzamos el mediodía para evitar que el cambio de zona horaria nos mueva el día
+            const d = new Date(dateStr + 'T12:00:00');
+            if (isNaN(d.getTime())) return dateStr; // Si no es fecha válida, devolvemos el original
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = meses[d.getMonth()];
+            const anio = d.getFullYear();
+            return `${dia}-${mes}-${anio}`;
+        }
+
+        // Esta función se ejecuta apenas abres la página en el navegador
+        window.onload = () => {
+            // Si ya teníamos un token guardado, intentamos entrar directamente
+            if (token) {
+                try {
+                    currentUser = JSON.parse(atob(token)); // Decodificamos el token para saber quién es
+                    initApp(); // Arrancamos la aplicación
+                } catch (e) {
+                    logout(); // Si el token falló, sacamos al usuario
+                }
+            }
+        };
+
+        /* 
+           FUNCIÓN DE LOGIN
+           Se comunica con el servidor para verificar si el usuario y la clave son correctos.
+        */
+        async function intentarLogin() {
+            const u = document.getElementById('log_user').value;
+            const p = document.getElementById('log_pass').value;
+
+            // Enviamos los datos al servidor usando FETCH (es como hacer una llamada telefónica)
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario: u, password: p })
+            });
+
+            const data = await res.json(); // Esperamos la respuesta del servidor
+
+            if (data.success) {
+                token = data.token;
+                localStorage.setItem('s_pro_token', token); // Guardamos el token en el navegador (memoria)
+                currentUser = JSON.parse(atob(token));
+                initApp();
+            } else {
+                // Si hay error (clave mal escrita, etc), lo mostramos en pantalla
+                document.getElementById('log_error').innerText = data.error;
+            }
+        }
+
+        /*
+           GESTIÓN DE LA INTERFAZ (Navegación)
+        */
+
+        // Muestra la app y oculta el login
+        function initApp() {
+            document.getElementById('login_screen').style.display = 'none';
+            document.getElementById('app').classList.add('active');
+            cargarDatosBasicos(); // Traemos la lista de animales del servidor
+            cargarTunnel();       // Obtenemos la URL de acceso externo
+            cargarDashboard();    // NUEVO: Llenamos las estadísticas de inicio
+        }
+
+        /* 
+           NUEVO: LLENA EL DASHBOARD CON DATOS REALES 
+           Muestra cuántos animales hay, cuánta leche se ha registrado hoy y los partos futuros.
+        */
+        async function cargarDashboard() {
+            try {
+                const res = await fetch('/api/dashboard');
+                const data = await res.json();
+
+                document.getElementById('st_animales').innerText = data.animales;
+                document.getElementById('st_leche').innerText = `${data.leche_hoy.toFixed(1)} kg`;
+
+                const tableBody = document.querySelector('#tbl_proximos tbody');
+                if (data.proximos && data.proximos.length > 0) {
+                    tableBody.innerHTML = data.proximos.map(p => `
+                        <tr>
+                            <td><b>${p.nombre}</b> <small>#${p.numero}</small></td>
+                            <td style="color:var(--primary); font-weight:bold;">${formatearFecha(p.fecha_parto_est)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#999; padding:15px;">No hay partos próximos registrados.</td></tr>';
+                }
+            } catch (e) { console.error("Error cargando dashboard", e); }
+        }
+
+        // Abre y cierra el menú lateral (Mobile)
+        function toggleNav() {
+            document.getElementById("mySidebar").classList.toggle('open');
+        }
+
+        // ESTA ES LA FUNCIÓN CLAVE DE LA SPA
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+            document.getElementById(id).classList.add('activa');
+
+            // Update active menu item
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const activeNav = document.querySelector(`.nav-item[onclick*="${id}"]`);
+            if (activeNav) activeNav.classList.add('active');
+
+            // Close sidebar on mobile
+            document.getElementById("mySidebar").classList.remove('open');
+
+            if (id === 'sec_admin') cargarTablaAdmin('animales');
+            if (id === 'sec_fichas') tabFichas('buscar');
+            if (id === 'sec_partos') cargarListaSimple('partos');
+        }
+
+        async function cargarListaSimple(tabla) {
+            const res = await fetch(`/api/tablas/${tabla}`);
+            const json = await res.json();
+            const data = json.data || [];
+            const container = document.getElementById(`${tabla}_lista_body`);
+            const th = document.getElementById(`${tabla}_lista_th`);
+
+            if (data.length === 0) {
+                container.innerHTML = `<tr><td colspan="10">No hay registros en ${tabla}</td></tr>`;
+                return;
+            }
+
+            const cols = Object.keys(data[0]).filter(k => k !== 'id' && k !== 'creado_por' && k !== 'creado_en');
+            th.innerHTML = `<tr><th style="width:80px;">Acción</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`;
+
+            container.innerHTML = data.map(row => {
+                const pkValue = (tabla === 'animales') ? row.numero : row.id;
+                return `<tr>
+                    <td style="text-align:center; display:flex; gap:5px; justify-content:center;">
+                        ${row.numero ? `<i class="fas fa-eye" style="color:var(--secondary); cursor:pointer;" onclick="verFicha('${row.numero}')"></i>` : ''}
+                        <i class="fas fa-check" style="color:var(--primary); cursor:pointer;" onclick="confirmarFila('${tabla}', '${pkValue}')"></i>
+                    </td>
+                    ${cols.map(c => `<td contenteditable="true" oninput="marcarModificadoGeneral('${tabla}', '${pkValue}', '${c}', this.innerText)">${row[c] || ''}</td>`).join('')}
+                </tr>`;
+            }).join('');
+        }
+
+        function tabFichas(tab) {
+            document.getElementById('tab_f_buscar').classList.toggle('activo', tab === 'buscar');
+            document.getElementById('tab_f_todo').classList.toggle('activo', tab === 'todo');
+
+            const nuevoBtn = document.querySelector('.btn-new');
+            if (nuevoBtn) nuevoBtn.style.display = tab === 'nuevo' ? 'none' : 'flex';
+
+            document.getElementById('f_buscar_area').style.display = tab === 'buscar' ? 'block' : 'none';
+            document.getElementById('f_todo_area').style.display = tab === 'todo' ? 'block' : 'none';
+            document.getElementById('f_nuevo_area').style.display = tab === 'nuevo' ? 'block' : 'none';
+            document.getElementById('f_detalle_area').style.display = 'none';
+
+            if (tab === 'todo' && listaAnimalesCompleta.length === 0) {
+                cargarTodoAnimales();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('s_pro_token');
+            location.reload();
+        }
+
+        async function cargarDatosBasicos() {
+            const res = await fetch('/api/animales-produccion');
+            listaAnimales = await res.json();
+            document.getElementById('st_animales').innerText = listaAnimales.length;
+        }
+
+        async function cargarTunnel() {
+            const res = await fetch('/api/tunnel');
+            const data = await res.json();
+            if (data.url) {
+                document.getElementById('tunnel_url_box').style.display = 'block';
+                document.getElementById('tunnel_url').innerText = data.url;
+            }
+        }
+
+        function filtrarFichas() {
+            const q = document.getElementById('f_bus').value.toLowerCase();
+            const res = document.getElementById('f_resultados');
+            const tableContainer = document.getElementById('f_tabla_container');
+
+            if (q.length < 1) {
+                res.innerHTML = '';
+                tableContainer.style.display = 'none';
+                return;
+            }
+
+            const matches = listaAnimales.filter(a => a.numero.includes(q) || a.nombre.toLowerCase().includes(q)).slice(0, 15);
+
+            if (matches.length > 0) {
+                tableContainer.style.display = 'block';
+                res.innerHTML = matches.map(a => `
+                    <tr>
+                        <td style="font-weight: 700;">${a.numero}</td>
+                        <td>${a.nombre}</td>
+                        <td>Hembra</td> <!-- Default or from data if available -->
+                        <td>-</td>
+                        <td><span class="badge-status status-sano">Sano</span></td>
+                        <td>
+                            <button class="btn-ficha" onclick="verFicha('${a.numero}')">
+                                <i class="fas fa-edit"></i> Ficha
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                res.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No se encontraron animales.</td></tr>';
+                tableContainer.style.display = 'block';
+            }
+        }
+
+        async function cargarTodoAnimales() {
+            try {
+                const res = await fetch('/api/tablas/animales');
+                const json = await res.json();
+                listaAnimalesCompleta = json.data || [];
+                actualizarSelectsFiltros();
+                aplicarFiltrosTodo();
+            } catch (e) {
+                console.error("Error cargando animales:", e);
+                document.getElementById('f_todo_resultados').innerHTML = '<tr><td colspan="7" style="color:red; text-align:center;">Error al cargar datos.</td></tr>';
+            }
+        }
+
+        function actualizarSelectsFiltros() {
+            const campos = ['sexo', 'estatus', 'lote', 'tipo'];
+            const ids = ['filt_sexo', 'filt_estatus', 'filt_lote', 'filt_tipo'];
+
+            campos.forEach((campo, idx) => {
+                const select = document.getElementById(ids[idx]);
+                const valores = [...new Set(listaAnimalesCompleta.map(a => a[campo]))].filter(v => v).sort();
+                select.innerHTML = '<option value="">TODOS</option>' + valores.map(v => `<option value="${v}">${v}</option>`).join('');
+            });
+        }
+
+        function aplicarFiltrosTodo() {
+            const fSexo = document.getElementById('filt_sexo').value;
+            const fEst = document.getElementById('filt_estatus').value;
+            const fLote = document.getElementById('filt_lote').value;
+            const fTipo = document.getElementById('filt_tipo').value;
+
+            const filtrados = listaAnimalesCompleta.filter(a => {
+                return (!fSexo || a.sexo === fSexo) &&
+                    (!fEst || a.estatus === fEst) &&
+                    (!fLote || a.lote === fLote) &&
+                    (!fTipo || a.tipo === fTipo);
+            });
+
+            document.getElementById('f_todo_count').innerText = `${filtrados.length} animales`;
+            const container = document.getElementById('f_todo_resultados');
+
+            if (filtrados.length === 0) {
+                container.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">No hay animales que coincidan.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = filtrados.map(a => `
+                <tr>
+                    <td style="font-weight: 700;">${a.numero}</td>
+                    <td>${a.nombre}</td>
+                    <td>${a.sexo || '-'}</td>
+                    <td>${a.raza || '-'}</td>
+                    <td>${a.lote || '-'}</td>
+                    <td>${a.tipo || '-'}</td>
+                    <td>
+                        <button class="btn-ficha" onclick="verFicha('${a.numero}')">
+                            <i class="fas fa-edit"></i> Ficha
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        async function verFicha(num) {
+            // Limpiamos el área de resultados antes de cargar (Regla: borrar lista al seleccionar)
+            document.getElementById('f_resultados').innerHTML = '';
+            document.getElementById('f_todo_resultados').innerHTML = '';
+
+            let a = null, pData = { partos: [], total_partos: 0 }, lData = [];
+
+            try {
+                // Traemos los datos básicos del animal
+                const resA = await fetch(`/api/detalle/${num}`);
+                if (resA.ok) a = await resA.json();
+
+                // Traemos los partos (Manejo de error: si falla, seguimos con lista vacía)
+                try {
+                    const resP = await fetch(`/api/partos/${num}`);
+                    if (resP.ok) pData = await resP.json();
+                } catch (e) { console.warn("Error cargando partos", e); }
+
+                // Traemos la leche (Manejo de error: si falla, seguimos con lista vacía - EVITA EL BLOQUEO)
+                try {
+                    const resL = await fetch(`/api/leche/${num}`);
+                    if (resL.ok) lData = await resL.json();
+                } catch (e) { console.warn("Error cargando leche", e); }
+
+                if (!a) return alert("No se pudo cargar la información del animal.");
+
+                document.getElementById('f_buscar_area').style.display = 'none';
+                document.getElementById('f_todo_area').style.display = 'none';
+                document.getElementById('f_detalle_area').style.display = 'block';
+
+                /* --- CÁLCULOS DE PRODUCCIÓN --- */
+                // Filtramos pesadas mayores que 0 para el promedio (Regla: sin tener en cuenta pesadas en 0)
+                const pesadasValidas = (lData || []).filter(l => l.kg > 0);
+                const totalLitros = pesadasValidas.reduce((acc, p) => acc + p.kg, 0);
+                const promedio = pesadasValidas.length > 0 ? (totalLitros / pesadasValidas.length).toFixed(2) : 0;
+
+                // Cálculo de Lactancia (Diferencia de días entre la primera y última pesada registrada)
+                let duracionLactancia = 0;
+                if ((lData || []).length > 0) {
+                    const fechas = lData.map(l => new Date(l.fecha)).sort((a, b) => a - b);
+                    const diffTime = Math.abs(fechas[fechas.length - 1] - fechas[0]);
+                    duracionLactancia = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                }
+
+                // RESUMEN HISTÓRICO COMPLETO
+                const historialPartosLen = (pData.partos || []).length;
+
+                // Generamos el formulario de edición detallado
+                document.getElementById('f_detalle_content').innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="color:var(--primary); margin:0;"><i class="fas fa-edit"></i> Ficha: ${a.nombre}</h2>
+                    <span class="badge badge-primary" style="font-size:16px;">#${a.numero}</span>
+                </div>
+
+                <!-- ÁREA DE FOTOS -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                    <div class="card" style="padding:10px; text-align:center; border-top:none; border:1px solid #eee;">
+                        <p style="font-size:12px; font-weight:bold; margin-bottom:10px;">FOTO DEL ANIMAL</p>
+                        <div id="prev_foto_animal" class="ocr-preview" style="height:120px; cursor:pointer;" onclick="document.getElementById('in_foto_animal').click()">
+                            ${a.foto_animal ? `<img src="/uploads/${a.foto_animal}">` : '<i class="fas fa-camera fa-2x" style="color:#ccc;"></i>'}
+                        </div>
+                        <input type="file" id="in_foto_animal" hidden onchange="previsualizarYSubir(this, 'foto_animal', '${a.numero}')">
+                    </div>
+                    <div class="card" style="padding:10px; text-align:center; border-top:none; border:1px solid #eee;">
+                        <p style="font-size:12px; font-weight:bold; margin-bottom:10px;">SEÑAS (HIERRO)</p>
+                        <div id="prev_foto_hierro" class="ocr-preview" style="height:120px; cursor:pointer;" onclick="document.getElementById('in_foto_hierro').click()">
+                            ${a.foto_hierro ? `<img src="/uploads/${a.foto_hierro}">` : '<i class="fas fa-fire fa-2x" style="color:#ccc;"></i>'}
+                        </div>
+                        <input type="file" id="in_foto_hierro" hidden onchange="previsualizarYSubir(this, 'foto_hierro', '${a.numero}')">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom: 25px;">
+                    <div class="form-group"><label>Nombre</label><input type="text" id="ed_nombre" value="${a.nombre || ''}" class="input-busqueda" style="margin-bottom:0;"></div>
+                    <div class="form-group"><label>Raza</label><input type="text" id="ed_raza" value="${a.raza || ''}" class="input-busqueda" style="margin-bottom:0;"></div>
+                    <div class="form-group"><label>Lote</label><input type="text" id="ed_lote" value="${a.lote || ''}" class="input-busqueda" style="margin-bottom:0;"></div>
+                    <div class="form-group"><label>Tipo</label><input type="text" id="ed_tipo" value="${a.tipo || ''}" class="input-busqueda" style="margin-bottom:0;"></div>
+                    <div class="form-group"><label>Estatus</label>
+                        <select id="ed_estatus" class="input-busqueda" style="margin-bottom:0;">
+                            <option ${a.estatus === 'Vivos' ? 'selected' : ''}>Vivos</option>
+                            <option ${a.estatus === 'Muertos' ? 'selected' : ''}>Muertos</option>
+                            <option ${a.estatus === 'Vendidos' ? 'selected' : ''}>Vendidos</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Propietario</label><input type="text" id="ed_propietario" value="${a.propietario || ''}" class="input-busqueda" style="margin-bottom:0;"></div>
+                    <div class="form-group"><label>Nro Madre</label><input type="text" id="ed_num_madre" value="${a.num_madre || ''}" class="input-busqueda" style="margin-bottom:0;"></div>
+                    <div class="form-group"><label>Padre</label><input type="text" id="ed_padre" value="${a.padre || ''}" class="input-busqueda" style="margin-bottom:0;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Comentarios / Observaciones</label>
+                    <textarea id="ed_comentarios" class="input-busqueda" style="height:80px; font-family:inherit;">${a.comentarios || ''}</textarea>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:40px;">
+                    <button class="btn-new" onclick="guardarCambiosFicha('${a.numero}')" style="justify-content:center; background:var(--primary);">
+                        <i class="fas fa-save"></i> GUARDAR
+                    </button>
+                    <button class="btn-new" onclick="abrirModalRapido('parto', '${a.numero}', '${a.nombre}')" style="justify-content:center; background:var(--secondary);">
+                        <i class="fas fa-baby-carriage"></i> + PARTO
+                    </button>
+                    <button class="btn-new" onclick="abrirModalRapido('leche', '${a.numero}', '${a.nombre}')" style="justify-content:center; background:var(--accent);">
+                        <i class="fas fa-tint"></i> + PESAJE
+                    </button>
+                </div>
+
+                <!-- RESUMEN HISTÓRICO -->
+                <h3 style="margin-top:40px; border-bottom: 2px solid var(--primary); padding-bottom:5px;">
+                    <i class="fas fa-chart-pie"></i> Resumen de Vida Productiva
+                </h3>
+                <div class="stats-grid" style="margin-top:10px;">
+                    <div class="stat-card" style="border-top: 3px solid var(--secondary);">
+                        <h4>${historialPartosLen}</h4>
+                        <p>Partos Registrados</p>
+                    </div>
+                    <div class="stat-card" style="border-top: 3px solid var(--secondary);">
+                        <h4>${totalLitros.toFixed(1)} <small>kg</small></h4>
+                        <p>Total Leche Acumulada</p>
+                    </div>
+                    <div class="stat-card" style="border-top: 3px solid var(--accent);">
+                        <h4>${promedio} <small>kg</small></h4>
+                        <p>Promedio Histórico</p>
+                    </div>
+                    <div class="stat-card" style="border-top: 3px solid var(--accent);">
+                        <h4>${pesadasValidas.length}</h4>
+                        <p>Días Pesados (Global)</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top:30px;"><i class="fas fa-baby-carriage"></i> Historial de Partos</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha Parto</th>
+                                <th>Cría</th>
+                                <th>Obs/Estatus</th>
+                                <th>Dur. Lactancia</th>
+                                <th>Promedio</th>
+                                <th>Intervalo (P-P)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(pData.partos || []).map((p, idx) => {
+                    const fechaMili = p.fecha + 'T12:00:00';
+                    const actual = new Date(fechaMili);
+                    let intStr = '-';
+                    let lactanciaStr = '-';
+                    let promLactStr = '-';
+
+                    if (idx < pData.partos.length - 1) {
+                        const anterior = new Date(pData.partos[idx + 1].fecha + 'T12:00:00');
+                        intStr = Math.ceil(Math.abs(actual - anterior) / (1000 * 60 * 60 * 24)) + ' d';
+                    }
+
+                    let fechaFin = new Date();
+                    if (idx > 0) {
+                        fechaFin = new Date(pData.partos[idx - 1].fecha + 'T12:00:00');
+                    }
+
+                    const lecheLactancia = pesadasValidas.filter(l => {
+                        const fl = new Date(l.fecha + 'T12:00:00');
+                        return fl >= actual && fl < fechaFin;
+                    }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+                    if (lecheLactancia.length > 0) {
+                        const prim = new Date(lecheLactancia[0].fecha + 'T12:00:00');
+                        const ult = new Date(lecheLactancia[lecheLactancia.length - 1].fecha + 'T12:00:00');
+                        lactanciaStr = (Math.ceil(Math.abs(ult - prim) / (1000 * 60 * 60 * 24)) + 1) + ' d';
+                        const sumaLact = lecheLactancia.reduce((acc, obj) => acc + obj.kg, 0);
+                        promLactStr = (sumaLact / lecheLactancia.length).toFixed(1) + ' kg';
+                    }
+
+                    return `<tr>
+                                    <td><b style="color:var(--text-main);">${formatearFecha(p.fecha)}</b></td>
+                                    <td>#${p.num_asignado || '-'}<br><small>${p.sexo || 'N/A'}</small></td>
+                                    <td><span class="badge-status status-sano" style="background:#edf2f7; color:#4a5568;">${p.estatus_cria || p.estado || '-'}</span></td>
+                                    <td>${lactanciaStr}</td>
+                                    <td><b style="color:var(--primary);">${promLactStr}</b></td>
+                                    <td><span class="badge-status" style="background:var(--bg); border:1px solid var(--border); color:var(--text-main);">${intStr}</span></td>
+                                </tr>`;
+                }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin-top:30px;"><i class="fas fa-tint"></i> Control de Pesajes</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Turno</th>
+                                <th>Peso (kg)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(lData || []).map(l => `
+                                <tr>
+                                    <td>${formatearFecha(l.fecha)}</td>
+                                    <td>${l.turno === 'M' ? 'Mañana' : 'Tarde'}</td>
+                                    <td style="font-weight:700; color:var(--primary);">${l.kg} kg</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            } catch (e) {
+                console.error("Error al renderizar ficha:", e);
+                alert("Ocurrió un error al cargar la ficha del animal.");
+            }
+        }
+
+        async function previsualizarYSubir(input, campo, num) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById(`prev_${campo}`).innerHTML = `<img src="${e.target.result}">`;
+            };
+            reader.readAsDataURL(file);
+            const fd = new FormData();
+            fd.append('foto', file);
+            const res = await fetch('/api/upload-foto', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                window[`last_${campo}`] = data.filename;
+            }
+        }
+
+        /* NUEVO: Recopila todos los datos del formulario y los envía al servidor */
+        async function guardarCambiosFicha(num) {
+            const data = {
+                numero: num,
+                nombre: document.getElementById('ed_nombre').value,
+                raza: document.getElementById('ed_raza').value,
+                lote: document.getElementById('ed_lote').value,
+                tipo: document.getElementById('ed_tipo').value,
+                estatus: document.getElementById('ed_estatus').value,
+                propietario: document.getElementById('ed_propietario').value,
+                num_madre: document.getElementById('ed_num_madre').value,
+                padre: document.getElementById('ed_padre').value,
+                comentarios: document.getElementById('ed_comentarios').value
+            };
+
+            // Agregamos las fotos si se subieron nuevas
+            if (window.last_foto_animal) data.foto_animal = window.last_foto_animal;
+            if (window.last_foto_hierro) data.foto_hierro = window.last_foto_hierro;
+
+            const res = await fetch('/api/registrar-animal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                alert('Cambios guardados correctamente');
+                window.last_foto_animal = null;
+                window.last_foto_hierro = null;
+                cargarDatosBasicos(); // Recargar lista resumida
+                listaAnimalesCompleta = []; // Forzar recarga de lista completa al navegar a 'TODO'
+            }
+        }
+
+        function volverALista() {
+            document.getElementById('f_detalle_area').style.display = 'none';
+            document.getElementById('f_buscar_area').style.display = 'block';
+        }
+
+        // LECHE
+        function sugerir(tipo, ctx) {
+            const q = document.getElementById(`${ctx}_bus`).value.toLowerCase();
+            const box = document.getElementById(`sug_${ctx}`);
+            if (q.length < 1) { box.style.display = 'none'; return; }
+            const matches = listaAnimales.filter(a => a.numero.includes(q) || a.nombre.toLowerCase().includes(q)).slice(0, 5);
+            box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selAnimalLeche('${m.numero}', '${m.nombre}')">${m.nombre} (#${m.numero})</div>`).join('');
+            box.style.display = 'block';
+        }
+
+        function selAnimalLeche(num, nom) {
+            selAnimal = { num, nom };
+            document.getElementById('l_sel_box').style.display = 'block';
+            document.getElementById('l_sel_nom').innerText = `${nom} (#${num})`;
+            document.getElementById('sug_l').style.display = 'none';
+        }
+
+        function setOrdeño(o) {
+            ordeñoActual = o;
+            document.getElementById('btn_m').classList.toggle('activo', o === 'M');
+            document.getElementById('btn_t').classList.toggle('activo', o === 'T');
+        }
+
+        async function registrarLeche() {
+            if (!selAnimal) return alert('Selecciona una vaca');
+            const peso = document.getElementById('l_peso').value;
+            if (!peso) return alert('Ingresa el peso');
+            const res = await fetch('/api/registrar-leche', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    numero: selAnimal.num, nombre: selAnimal.nom,
+                    peso_tobo: peso, peso_tobo_kg: 0.865,
+                    ordeño: ordeñoActual, fecha: new Date().toISOString().split('T')[0],
+                    creado_por: currentUser.user
+                })
+            });
+            if (res.ok) { alert('Pesaje guardado'); location.reload(); }
+        }
+
+        // QUESO
+        async function registrarQueso() {
+            const peso = document.getElementById('q_peso').value;
+            if (!peso) return alert('Ingresa el peso');
+            const res = await fetch('/api/registrar-queso', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fecha: new Date().toISOString().split('T')[0],
+                    equipo: document.getElementById('q_turno').value,
+                    peso_kg: peso, producto: 'QUESO', creado_por: currentUser.user
+                })
+            });
+            if (res.ok) { alert('Producción guardada'); location.reload(); }
+        }
+
+        // OCR
+        function abrirOCR(id) { ocrTarget = id; document.getElementById('modal_ocr').style.display = 'flex'; }
+        function cerrarOCR() { document.getElementById('modal_ocr').style.display = 'none'; }
+        async function procesarFoto(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('ocr_prev').innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+            document.getElementById('ocr_loading').style.display = 'block';
+            const fd = new FormData(); fd.append('foto', file);
+            const res = await fetch('/api/ocr-peso', { method: 'POST', body: fd });
+            const data = await res.json();
+            document.getElementById('ocr_loading').style.display = 'none';
+            if (data.peso_ocr) {
+                document.getElementById(ocrTarget).value = data.peso_ocr;
+                setTimeout(cerrarOCR, 800);
+            }
+        }
+
+        // ADMIN (EXCEL FILTER SYSTEM)
+        let pendingChanges = {};
+        let adminConfig = null;
+        let activeFilters = {}; // { colName: [valores seleccionados] }
+        let currentFilterCol = null;
+
+        async function cargarTablaAdmin(tabla) {
+            try {
+                const resConf = await fetch('/api/admin-config');
+                if (resConf.ok) {
+                    adminConfig = await resConf.json();
+                } else {
+                    adminConfig = adminConfig || {};
+                }
+            } catch (e) {
+                adminConfig = adminConfig || {};
+            }
+
+            pendingChanges = {};
+            activeFilters = {}; // Resetear filtros
+
+            // Por petición: Estatus 'Vivos' por defecto para la tabla de animales
+            if (tabla === 'animales') {
+                activeFilters['estatus'] = ['Vivos'];
+            }
+
+            document.getElementById('admin_save_bar').style.display = 'none';
+            document.getElementById('admin_sort_box').style.display = (tabla === 'animales') ? 'flex' : 'none';
+            let url = `/api/tablas/${tabla}?estatus=Todos`;
+
+            if (tabla === 'animales') {
+                const col = document.getElementById('admin_sort_col').value;
+                url += `&col=${col}`;
+            }
+
+
+            const res = await fetch(url);
+            const { data } = await res.json();
+            if (!data || data.length === 0) {
+                document.getElementById('admin_body').innerHTML = '<tr><td colspan="100" style="text-align:center; padding:20px;">No hay datos</td></tr>';
+                return;
+            }
+
+            window.adminDataRaw = data; // Guardar original para filtros
+            const allCols = Object.keys(data[0]);
+            let visibleCols = adminConfig[tabla] ? adminConfig[tabla].visible : allCols;
+            if (!visibleCols) visibleCols = allCols;
+
+            window.adminVisibleCols = visibleCols;
+
+            // Generar Encabezados con iconos de filtro (excepto para nombres y números)
+            document.getElementById('admin_th').innerHTML = `
+                <tr>
+                    <th>Acción</th>
+                    ${visibleCols.map(c => {
+                const lowCol = c.toLowerCase();
+                if (lowCol.includes('nombre') || lowCol.includes('numero') || lowCol.includes('num_')) {
+                    return `<th>${c}</th>`;
+                }
+                // Marcar el icono si hay un filtro activo para esta columna
+                const isActive = (activeFilters[c] && activeFilters[c].length > 0 && activeFilters[c].length !== [...new Set(window.adminDataRaw.map(r => String(r[c] || '(Vacío)')))].length) ? 'active' : '';
+                return `
+                        <th onclick="toggleFiltro(event, '${c}')">
+                            ${c} 
+                            <i class="fas fa-caret-down filter-icon ${isActive}" id="filter_icon_${c}"></i>
+                        </th>`;
+            }).join('')}
+                </tr>`;
+
+            ejecutarFiltroFinal();
+        }
+
+        function renderAdminRows(data, visibleCols, tabla) {
+            document.getElementById('admin_body').innerHTML = data.map(row => {
+                const pkValue = (tabla === 'animales') ? row.numero : row.id;
+                const cells = visibleCols.map(c => {
+                    let val = row[c] || '';
+                    let displayVal = val;
+                    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+                        const d = val.split(' ')[0].split('-');
+                        displayVal = `${d[2]}-${d[1]}-${d[0]}`;
+                    }
+                    if (val === '...') displayVal = '';
+                    const cellId = `cell_${tabla}_${pkValue}_${c}`;
+                    return `<td id="${cellId}" contenteditable="true" style="white-space:nowrap;" oninput="marcarModificado('${cellId}')" onblur="editarCelda('${tabla}', '${pkValue}', '${c}', this.innerText)">${displayVal}</td>`;
+                }).join('');
+
+                return `<tr>
+                <td style="text-align:center;">
+                    <i class="fas fa-trash-alt" style="color:var(--danger); cursor:pointer;" onclick="borrarFilaAdmin('${tabla}', '${pkValue}')"></i>
+                </td>
+                ${cells}
+                </tr>`;
+            }).join('');
+        }
+
+        // LÓGICA DE FILTROS EXCEL
+        function toggleFiltro(event, col) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('admin_filter_dropdown');
+
+            if (currentFilterCol === col && dropdown.style.display === 'flex') {
+                return cerrarFiltroColumna();
+            }
+
+            currentFilterCol = col;
+
+            // Obtener valores únicos de los datos originales
+            const uniqueVals = [...new Set(window.adminDataRaw.map(r => String(r[col] || '(Vacío)')))].sort();
+
+            const list = document.getElementById('admin_filter_list');
+            list.innerHTML = `
+                <div style="padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+                    <div class="admin-filter-item" onclick="ordenarLocal('asc')" style="padding:8px; border-radius:4px;">
+                        <i class="fas fa-sort-alpha-down"></i> Ordenar de A a Z
+                    </div>
+                    <div class="admin-filter-item" onclick="ordenarLocal('desc')" style="padding:8px; border-radius:4px;">
+                        <i class="fas fa-sort-alpha-up"></i> Ordenar de Z a A
+                    </div>
+                </div>
+                <label class="admin-filter-item">
+                    <input type="checkbox" id="filter_select_all" onchange="seleccionarTodosFiltro(this.checked)" ${(!activeFilters[col] || activeFilters[col].length === uniqueVals.length) ? 'checked' : ''}>
+                    <span>(Seleccionar todo)</span>
+                </label>
+                ${uniqueVals.map(v => {
+                const isChecked = !activeFilters[col] || activeFilters[col].includes(v);
+                return `
+                    <label class="admin-filter-item val-item">
+                        <input type="checkbox" value="${v}" ${isChecked ? 'checked' : ''}>
+                        <span>${v}</span>
+                    </label>`;
+            }).join('')}
+            `;
+
+            // Posicionar el menú
+            const rect = event.currentTarget.getBoundingClientRect();
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+            dropdown.style.display = 'flex';
+        }
+
+        function seleccionarTodosFiltro(checked) {
+            document.querySelectorAll('#admin_filter_list input').forEach(i => i.checked = checked);
+        }
+
+        function filtrarListaValoresUnicos(txt) {
+            const query = txt.toLowerCase();
+            document.querySelectorAll('.val-item').forEach(el => {
+                const val = el.innerText.toLowerCase();
+                el.style.display = val.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function cerrarFiltroColumna() {
+            document.getElementById('admin_filter_dropdown').style.display = 'none';
+        }
+
+        function aplicarFiltroColumna() {
+            const checks = document.querySelectorAll('#admin_filter_list .val-item input:checked');
+            const selected = Array.from(checks).map(c => c.value);
+
+            activeFilters[currentFilterCol] = selected;
+
+            // Marcar icono como activo
+            const icon = document.getElementById(`filter_icon_${currentFilterCol}`);
+            icon.classList.toggle('active', selected.length < document.querySelectorAll('#admin_filter_list .val-item input').length);
+
+            ejecutarFiltroFinal();
+            cerrarFiltroColumna();
+        }
+
+        function ejecutarFiltroFinal() {
+            let data = [...window.adminDataRaw];
+            const filterCols = Object.keys(activeFilters);
+
+            const filtered = data.filter(row => {
+                return filterCols.every(col => {
+                    const cellVal = String(row[col] || '(Vacío)');
+                    return activeFilters[col].includes(cellVal);
+                });
+            });
+
+            renderAdminRows(filtered, window.adminVisibleCols, document.getElementById('admin_tablas').value);
+        }
+
+        function ordenarLocal(sentido) {
+            const tabla = document.getElementById('admin_tablas').value;
+            window.adminDataRaw.sort((a, b) => {
+                let valA = String(a[currentFilterCol] || '').toLowerCase();
+                let valB = String(b[currentFilterCol] || '').toLowerCase();
+
+                // Intento de orden numérico si aplica
+                if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
+                    return sentido === 'asc' ? valA - valB : valB - valA;
+                }
+
+                if (valA < valB) return sentido === 'asc' ? -1 : 1;
+                if (valA > valB) return sentido === 'asc' ? 1 : -1;
+                return 0;
+            });
+            ejecutarFiltroFinal();
+            cerrarFiltroColumna();
+        }
+
+        // Cerrar al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.admin-filter-dropdown') && !e.target.closest('th')) {
+                cerrarFiltroColumna();
+            }
+        });
+
+        async function abrirConfigAdmin() {
+            const tabla = document.getElementById('admin_tablas').value;
+            const res = await fetch(`/api/tablas/${tabla}?limit=1`); // Solo para obtener nombres de columnas
+            const { data } = await res.json();
+            if (!data || data.length === 0) return alert('No hay datos para configurar');
+
+            const allCols = Object.keys(data[0]);
+            const config = adminConfig[tabla] || { visible: allCols };
+
+            const list = document.getElementById('admin_config_list');
+            list.innerHTML = allCols.map(c => `
+                <label style="display:flex; align-items:center; gap:10px; padding:10px; background:#f8fafc; border-radius:6px; cursor:pointer;">
+                    <input type="checkbox" value="${c}" ${config.visible.includes(c) ? 'checked' : ''} style="width:18px; height:18px;">
+                    <span style="font-weight:600; font-size:14px;">${c}</span>
+                </label>
+            `).join('');
+
+            document.getElementById('modal_admin_config').style.display = 'flex';
+        }
+
+        function cerrarConfigAdmin() {
+            document.getElementById('modal_admin_config').style.display = 'none';
+        }
+
+        async function guardarConfigAdmin() {
+            const tabla = document.getElementById('admin_tablas').value;
+            const checks = document.querySelectorAll('#admin_config_list input[type="checkbox"]');
+            const visible = [];
+            checks.forEach(c => { if (c.checked) visible.push(c.value); });
+
+            if (visible.length === 0) return alert('Debe seleccionar al menos una columna');
+
+            adminConfig[tabla] = { visible, order: visible };
+
+            const res = await fetch('/api/admin-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(adminConfig)
+            });
+
+            if (res.ok) {
+                cerrarConfigAdmin();
+                cargarTablaAdmin(tabla);
+            }
+        }
+
+        function marcarModificado(cellId) {
+            const el = document.getElementById(cellId);
+            el.style.color = '#f59e0b'; // Naranja (Amber)
+            el.style.fontWeight = '700';
+            document.getElementById('admin_save_bar').style.display = 'flex';
+        }
+
+        function editarCelda(tabla, id, col, val) {
+            const key = `${tabla}|${id}|${col}`;
+            pendingChanges[key] = val;
+        }
+
+        async function guardarCambiosLote() {
+            const keys = Object.keys(pendingChanges);
+            if (keys.length === 0) return;
+
+            const btn = event.target;
+            btn.innerText = 'GUARDANDO...';
+            btn.disabled = true;
+
+            try {
+                for (const key of keys) {
+                    const [tabla, id, columna] = key.split('|');
+                    const valor = pendingChanges[key];
+
+                    // VALIDACIÓN: No permitir blanco en numero o nombre para animales
+                    if (tabla === 'animales') {
+                        if ((columna === 'numero' || columna === 'nombre') && (!valor || valor.trim() === "" || valor === "...")) {
+                            alert(`Error: El campo "${columna}" no puede estar vacío.`);
+                            return;
+                        }
+                    }
+
+                    await fetch('/api/save-cell', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tabla, id, columna, valor })
+                    });
+                }
+                alert('¡Todos los cambios se han guardado con éxito!');
+                cargarTablaAdmin(document.getElementById('admin_tablas').value);
+            } catch (e) {
+                alert('Error al guardar algunos cambios');
+                console.error(e);
+            } finally {
+                btn.innerText = 'GUARDAR TODO';
+                btn.disabled = false;
+            }
+        }
+
+        async function borrarFilaAdmin(tabla, id) {
+            if (!confirm(`¿Estás seguro de eliminar este registro de la tabla ${tabla}? Esta acción no se puede deshacer.`)) return;
+            const res = await fetch('/api/borrar-fila', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tabla, id })
+            });
+            if (res.ok) {
+                cargarTablaAdmin(tabla);
+            } else {
+                alert('Error al eliminar la fila');
+            }
+        }
+
+        async function agregarFilaAdmin() {
+            const tabla = document.getElementById('admin_tablas').value;
+            const res = await fetch('/api/agregar-fila', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tabla }) });
+            if (res.ok) { alert('Fila agregada'); cargarTablaAdmin(tabla); }
+            else { alert('Error al agregar fila'); }
+        }
+
+        // NUEVAS FUNCIONES PARA MODIFICAR Y CONFIRMAR EN LISTAS
+        function marcarModificadoGeneral(tabla, id, columna, valor) {
+            if (!pendingChanges[id]) pendingChanges[id] = {};
+            pendingChanges[id].tabla = tabla;
+            pendingChanges[id][columna] = valor;
+            document.getElementById('admin_save_bar').style.display = 'flex';
+        }
+
+        async function confirmarFila(tabla, id) {
+            const rowChanges = [];
+
+            // Si el objeto de cambios no tiene nada para este ID, forzamos el guardado de lo que haya en el DOM si es posible,
+            // pero lo más probable es que sea 'animales' de la lista TODO
+            if (!pendingChanges[id]) {
+                // Si no hay cambios registrados, es posible que el usuario haya editado pero el evento oninput no capturó todo.
+                // Sin embargo, las celdas tienen oninput="marcarModificadoGeneral..."
+                alert('No hay cambios pendientes para esta fila.');
+                return;
+            }
+
+            const data = pendingChanges[id];
+            for (let col in data) {
+                if (col !== 'tabla') {
+                    rowChanges.push(fetch('/api/save-cell', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tabla, id, columna: col, valor: data[col] })
+                    }));
+                }
+            }
+
+            try {
+                await Promise.all(rowChanges);
+                delete pendingChanges[id];
+                if (Object.keys(pendingChanges).length === 0) {
+                    document.getElementById('admin_save_bar').style.display = 'none';
+                }
+                alert('¡Datos confirmados!');
+                if (tabla === 'animales' && document.getElementById('sec_fichas').classList.contains('activa')) {
+                    cargarTodoAnimales();
+                } else {
+                    cargarTablaAdmin(tabla);
+                }
+            } catch (e) {
+                alert('Error al guardar: ' + e.message);
+            }
+        }
+
+        async function generarProximoNumero() {
+            const res = await fetch('/api/proximo-numero');
+            const data = await res.json();
+            if (data.proximo_numero) document.getElementById('n_numero').value = data.proximo_numero;
+        }
+
+        async function guardarNuevoAnimal() {
+            const num = document.getElementById('n_numero').value;
+            const nom = document.getElementById('n_nombre').value;
+            const sexo = document.getElementById('n_sexo').value;
+            const tipo = document.getElementById('n_tipo').value;
+            if (!num || !nom) return alert('Número y nombre obligatorios');
+            const res = await fetch('/api/registrar-animal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numero: num, nombre: nom, sexo, tipo, estatus: 'Vivos' }) });
+            if (res.ok) { alert('Animal creado'); tabFichas('buscar'); cargarDatosBasicos(); }
+        }
+
+        function abrirModalRapido(tipo, num, nom) {
+            ocrTarget = tipo === 'leche' ? 'm_peso' : null;
+            const modal = document.getElementById('modal_evento');
+            modal.style.display = 'flex';
+            document.getElementById('m_titulo').innerText = tipo === 'parto' ? 'Registrar Parto' : 'Registrar Pesaje';
+            document.getElementById('m_info').innerText = `${nom} (#${num})`;
+            document.getElementById('m_parto_inputs').style.display = tipo === 'parto' ? 'block' : 'none';
+            document.getElementById('m_leche_inputs').style.display = tipo === 'leche' ? 'block' : 'none';
+            window.modalCtx = { tipo, num, nom };
+        }
+
+        function cerrarModalRapido() { document.getElementById('modal_evento').style.display = 'none'; }
+
+        async function registrarEventoRapido() {
+            const ctx = window.modalCtx;
+            if (ctx.tipo === 'leche') {
+                const peso = document.getElementById('m_peso').value;
+                if (!peso) return alert('Ingrese el peso');
+                const res = await fetch('/api/registrar-leche', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numero: ctx.num, nombre: ctx.nom, peso_tobo: peso, peso_tobo_kg: 0.865, turno: ordeñoActual, creado_por: currentUser.user }) });
+                if (res.ok) { alert('Pesaje guardado'); cerrarModalRapido(); verFicha(ctx.num); }
+            } else {
+                const fecha = document.getElementById('m_fecha_p').value;
+                const c_num = document.getElementById('m_cria_num').value;
+                const c_sexo = document.getElementById('m_cria_sexo').value;
+                if (!fecha || !c_num) return alert('Fecha y número de cría obligatorios');
+                const res = await fetch('/api/registrar-parto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fecha, num_madre: ctx.num, nom_madre: ctx.nom, num_asignado: c_num, sexo_cria: c_sexo, creado_por: currentUser.user }) });
+                if (res.ok) { alert('Parto guardado'); cerrarModalRapido(); verFicha(ctx.num); }
+            }
+        }
+    </script>
+</body>
+
+</html>

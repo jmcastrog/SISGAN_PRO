@@ -1,0 +1,100 @@
+{
+  "animales": {
+    "visible": [
+      "numero",
+      "nombre",
+      "sexo",
+      "tipo",
+      "lote",
+      "estatus",
+      "propietario"
+    ],
+    "order": [
+      "numero",
+      "nombre",
+      "sexo",
+      "tipo",
+      "lote",
+      "estatus",
+      "propietario"
+    ]
+  },
+  "control_leche": {
+    "visible": [
+      "fecha",
+      "numero_animal",
+      "nombre_animal",
+      "kg"
+    ],
+    "order": [
+      "fecha",
+      "numero_animal",
+      "nombre_animal",
+      "kg"
+    ]
+  },
+  "partos": {
+    "visible": [
+      "fecha",
+      "num_madre",
+      "nom_madre",
+      "num_asignado",
+      "sexo",
+      "peso"
+    ],
+    "order": [
+      "fecha",
+      "num_madre",
+      "nom_madre",
+      "num_asignado",
+      "sexo",
+      "peso"
+    ]
+  },
+  "servicios": {
+    "visible": [
+      "fecha",
+      "numero",
+      "nombre",
+      "toro",
+      "raza_toro"
+    ],
+    "order": [
+      "fecha",
+      "numero",
+      "nombre",
+      "toro",
+      "raza_toro"
+    ]
+  },
+  "queso": {
+    "visible": [
+      "fecha",
+      "equipo",
+      "peso_kg"
+    ],
+    "order": [
+      "fecha",
+      "equipo",
+      "peso_kg"
+    ]
+  },
+  "palpaciones": {
+    "visible": [
+      "fecha",
+      "numero",
+      "nombre",
+      "diagnostico",
+      "observaciones",
+      "tecnico"
+    ],
+    "order": [
+      "fecha",
+      "numero",
+      "nombre",
+      "diagnostico",
+      "observaciones",
+      "tecnico"
+    ]
+  }
+}

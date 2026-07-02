@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+data/sisgan_pro.db
+
+# Uploads
+uploads/
+
+# Config
+.env
+*.log
+logs/
+
+# Temporary files
+tmp_*.js
+borrador_leche.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,3412 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>SISGAN PRO - Hacienda La Mapora</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Librería EXIF para procesar fotos localmente -->
+    <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleNav()"></div>
+
+    <!-- PANTALLA DE LOGUEO -->
+    <div id="login_screen">
+        <div class="login-box">
+            <h1
+                style="display:flex;align-items:center;justify-content:center;gap:15px; color:var(--sidebar-bg); margin-bottom: 30px;">
+                <i class="fas fa-horse-head"></i> LA MAPORA
+            </h1>
+            <input type="text" id="log_user" placeholder="Usuario">
+            <input type="password" id="log_pass" placeholder="Contraseña">
+            <p id="log_error" style="color:var(--danger);font-size:13px;margin-bottom:15px;"></p>
+            <button id="btn_login" onclick="intentarLogin()">INGRESAR AL SISTEMA</button>
+        </div>
+    </div>
+
+    <!-- CUERPO PRINCIPAL DE LA APLICACIÓN -->
+    <div id="app" style="display: contents;">
+
+        <!-- Mobile Header (Only visible on small screens) -->
+        <div class="mobile-header">
+            <i class="fas fa-bars fa-lg" onclick="toggleNav()" style="cursor: pointer;"></i>
+            <h3 style="margin:0; font-weight: 800;">SISGAN V5</h3>
+            <i class="fas fa-sync-alt" onclick="location.reload()" style="cursor: pointer;"></i>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div id="mySidebar" class="sidebar">
+            <div class="sidebar-header">
+                SISGAN V5
+            </div>
+            <div class="sidebar-menu">
+                <a href="#" onclick="mostrarSeccion('sec_inicio')" class="nav-item" id="nav_inicio">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_fichas')" class="nav-item" id="nav_fichas">
+                    <i class="fas fa-cow"></i> Animales
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_leche')" class="nav-item">
+                    <i class="fas fa-tint"></i> Control Lechero
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_queso')" class="nav-item">
+                    <i class="fas fa-cheese"></i> Producción Queso
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_partos')" class="nav-item">
+                    <i class="fas fa-baby-carriage"></i> Partos
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_servicios')" class="nav-item">
+                    <i class="fas fa-venus-mars"></i> Reproducción
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_bajas')" class="nav-item">
+                    <i class="fas fa-arrow-down"></i> Bajas del Hato
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_admin')" class="nav-item">
+                    <i class="fas fa-database"></i> Administración
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_config')" class="nav-item">
+                    <i class="fas fa-cogs"></i> Configuración
+                </a>
+                <a href="#" onclick="mostrarSeccion('sec_manual')" class="nav-item">
+                    <i class="fas fa-book"></i> Manual de Usuario
+                </a>
+            </div>
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()"
+                    style="color:var(--danger); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+
+            <!-- SECCIÓN INICIO -->
+            <section id="sec_inicio" class="seccion activa">
+                <div class="section-header">
+                    <h1 class="section-title">Dashboard</h1>
+                </div>
+
+                <div class="stats-grid" id="stats_grid" style="grid-template-columns: auto 1fr;">
+                    <div class="stat-card" style="padding:8px 12px;">
+                        <h2 id="st_animales" style="margin:0; font-size:22px; display:inline;">--</h2>
+                        <span style="color:var(--text-muted); font-size:11px; text-transform:uppercase; font-weight:700; margin-left:4px;">Animales</span>
+                    </div>
+                    <div class="stat-card" style="padding:8px 12px;">
+                        <div id="prod_titulos" style="display:grid; grid-template-columns: repeat(8, 1fr); gap:4px; font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; text-align:center;"></div>
+                        <div id="prod_container" style="display:flex; gap:10px; justify-content:center; font-size:13px; margin-top:4px;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-pie-chart"></i> Composición del Hato</h3>
+                    <div id="desglose_container" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;"></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-clock"></i> Próximos Partos</h3>
+                    <div class="table-container">
+                        <table id="tbl_proximos">
+                            <thead>
+                                <tr>
+                                    <th>Madre</th>
+                                    <th>Fecha Est.</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tunnel_url_box"
+                    style="margin-top:20px; font-size:12px; color:var(--secondary); display:none; text-align: center; background: #ebf4ff; padding: 10px; border-radius: 8px;">
+                    <b>ACCESO EXTERNO:</b> <span id="tunnel_url">...</span>
+                </div>
+            </section>
+
+            <!-- SECCIÓN FICHAS -->
+            <section id="sec_fichas" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title">Animales</h1>
+                    <button class="btn-new" onclick="tabFichas('nuevo')">
+                        <i class="fas fa-plus"></i> Nuevo
+                    </button>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <button id="tab_f_buscar" onclick="tabFichas('buscar')" class="btn-opcion activo">BUSCADOR</button>
+                    <button id="tab_f_todo" onclick="tabFichas('todo')" class="btn-opcion">LISTADO COMPLETO</button>
+                </div>
+
+                <div id="f_buscar_area">
+                    <div class="card">
+                        <input type="text" id="f_bus" class="input-busqueda" placeholder="Buscar por número o nombre..."
+                            oninput="filtrarFichas()">
+
+                        <div class="table-container" id="f_tabla_container" style="display:none;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Num</th>
+                                        <th>Nombre</th>
+                                        <th>Sexo</th>
+                                        <th>Raza</th>
+                                        <th>Salud</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="f_resultados"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÁREA TODO -->
+                <div id="f_todo_area" style="display:none;">
+                    <div class="card">
+                        <div
+                            style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin:0;"><i class="fas fa-list"></i> Todos los Animales</h3>
+                            <span id="f_todo_count" class="badge-status status-sano"
+                                style="background: var(--sidebar-bg);">0 animales</span>
+                        </div>
+
+                        <!-- Filtros -->
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; margin-bottom:25px; background: var(--bg); padding: 20px; border-radius: 12px;">
+                            <div class="form-group">
+                                <label>Sexo:</label>
+                                <select id="filt_sexo" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Estatus:</label>
+                                <select id="filt_estatus" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Lote:</label>
+                                <select id="filt_lote" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo:</label>
+                                <select id="filt_tipo" onchange="aplicarFiltrosTodo()" class="input-busqueda"
+                                    style="margin-bottom:0;"></select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Num</th>
+                                        <th>Nombre</th>
+                                        <th>Sexo</th>
+                                        <th>Raza</th>
+                                        <th>Lote</th>
+                                        <th>Tipo</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="f_todo_resultados"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÁREA NUEVO ANIMAL -->
+                <div id="f_nuevo_area" style="display:none;">
+                    <div class="card">
+                        <h3 style="margin-bottom:20px;"><i class="fas fa-plus-circle"></i> Registrar Nuevo Animal</h3>
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px; margin-bottom:20px;">
+                            <div class="form-group">
+                                <label>Número / Arete</label>
+                                <div style="display:flex; gap:10px;">
+                                    <input type="text" id="n_numero" class="input-busqueda" placeholder="Ej: 24001"
+                                        style="margin-bottom:0;">
+                                    <button class="btn-new" style="width:60px; background:var(--sidebar-bg);"
+                                        onclick="generarProximoNumero()"><i class="fas fa-magic"></i></button>
+                                </div>
+                            </div>
+                            <div class="form-group"><label>Nombre</label><input type="text" id="n_nombre"
+                                    class="input-busqueda" placeholder="Nombre" style="margin-bottom:0;"></div>
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="n_sexo" class="input-busqueda" style="margin-bottom:0;">
+                                    <option value="Hembra">Hembra</option>
+                                    <option value="Macho">Macho</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="n_tipo" class="input-busqueda" style="margin-bottom:0;">
+                                    <option>Vaca</option>
+                                    <option>Novilla</option>
+                                    <option>Macho</option>
+                                    <option>Maute</option>
+                                    <option>Becerro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="btn_guardar_nuevo_animal" class="btn-new" onclick="guardarNuevoAnimal()"
+                            style="width:100%; justify-content:center; height:50px; font-size:16px;">
+                            <i class="fas fa-check-circle"></i> CREAR FICHA BÁSICA
+                        </button>
+                    </div>
+                </div>
+
+                <div id="f_detalle_area" style="display:none;">
+                    <button class="btn-opcion" style="margin-bottom:20px;" onclick="volverALista()"><i
+                            class="fas fa-arrow-left"></i> VOLVER</button>
+                    <div id="f_detalle_content" class="card"></div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN LECHE -->
+            <section id="sec_leche" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title"><i class="fas fa-tint"></i> Control Lechero</h1>
+                </div>
+
+                <!-- CABECERA DE SESIÓN (fecha, turno y tobo) -->
+                <div class="card" style="margin-bottom:15px;">
+                    <div style="display:flex; flex-wrap:wrap; gap:15px; align-items:flex-end;">
+                        <div class="form-group" style="margin:0; flex:1; min-width:140px;">
+                            <label><i class="fas fa-calendar-day"></i> Fecha de pesada:</label>
+                            <input type="date" id="leche_fecha" class="input-form" style="height:46px;">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label><i class="fas fa-sun"></i> Turno:</label>
+                            <div style="display:flex; gap:8px;">
+                                <button id="leche_btn_m" class="btn-opcion activo" onclick="lecheSetTurno('M')"><i
+                                        class="fas fa-sun"></i> MAÑANA</button>
+                                <button id="leche_btn_t" class="btn-opcion" onclick="lecheSetTurno('T')"><i
+                                        class="fas fa-cloud-moon"></i> TARDE</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin:0; min-width:140px;">
+                            <label><i class="fas fa-bucket"></i> Peso del tobo (kg):</label>
+                            <input type="number" id="leche_peso_tobo" class="input-form" step="0.01" min="0"
+                                value="0.865" style="height:46px; font-size:16px; font-weight:bold; max-width:120px;"
+                                oninput="leche_actualizarNeto()" title="Peso del tobo/balde vacío en kg">
+                        </div>
+                        <div id="leche_borrador_badge"
+                            style="display:none; background:#fef3c7; border:1px solid #f59e0b; border-radius:8px; padding:8px 14px; font-size:13px; color:#92400e;">
+                            <i class="fas fa-save"></i> <b>Borrador recuperado</b>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO DE CAPTURA -->
+                <div class="card" style="margin-bottom:15px;">
+                    <h4 style="margin:0 0 15px 0; color:var(--primary-dark);"><i class="fas fa-plus-circle"></i> Agregar
+                        animal</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+                        <div class="form-group" style="margin:0; flex:2; min-width:200px; position:relative;">
+                            <label>Buscar vaca:</label>
+                            <input type="text" id="leche_bus" class="input-form" placeholder="Número o nombre..."
+                                oninput="leche_sugerir()" onkeydown="if(event.key==='Escape')leche_cerrarSug()">
+                            <div id="leche_sug" class="suggestion-box"
+                                style="display:none; position:absolute; background:white; border:1px solid #ddd; width:100%; border-radius:8px; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:220px; overflow-y:auto;">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin:0; flex:1; min-width:130px;">
+                            <label>Peso bruto (con tobo):</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="number" id="leche_kg" class="input-form" step="0.1" min="0"
+                                    placeholder="0.0" style="height:46px; font-size:22px; font-weight:bold;"
+                                    oninput="leche_actualizarNeto()"
+                                    onkeydown="if(event.key==='Enter'){event.preventDefault(); lecheAgregarEntrada();}">
+                                <button class="btn-new" style="width:50px; flex-shrink:0; background:var(--sidebar-bg);"
+                                    onclick="abrirOCR('leche_kg')" title="Foto del termómetro">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                            </div>
+                            <div
+                                style="margin-top:5px; font-size:12px; color:#0369a1; font-weight:bold; min-height:18px;">
+                                Neto: <span id="leche_neto_preview">—</span> kg
+                            </div>
+                        </div>
+                        <button class="btn-new" style="height:46px; padding:0 20px; white-space:nowrap;"
+                            onclick="lecheAgregarEntrada()">
+                            <i class="fas fa-plus"></i> Agregar
+                        </button>
+                    </div>
+                    <div id="leche_sel_info"
+                        style="display:none; margin-top:10px; background:#e0f2fe; border-radius:8px; padding:8px 14px; color:#0369a1; font-size:13px;">
+                        <i class="fas fa-check-circle"></i> <span id="leche_sel_nom">—</span>
+                    </div>
+                </div>
+
+                <!-- LISTA DE PRE-CARGA -->
+                <div class="card">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                        <h4 style="margin:0; color:var(--primary-dark);">
+                            <i class="fas fa-list-ul"></i> Lista de pesadas
+                            <span id="leche_contador"
+                                style="font-size:13px; background:var(--sidebar-bg); color:white; border-radius:20px; padding:2px 10px; margin-left:8px;">0
+                                vacas</span>
+                        </h4>
+                        <div style="display:flex; gap:8px;">
+                            <span id="leche_total_kg"
+                                style="font-weight:bold; color:var(--primary-dark); font-size:15px; align-self:center;">Total:
+                                0 kg</span>
+                            <button class="btn-new" onclick="lecheConfirmar()"
+                                style="background:var(--success,#16a34a); height:42px; padding:0 18px;"
+                                id="leche_btn_confirmar" disabled>
+                                <i class="fas fa-check-double"></i> GRABAR EN BD
+                            </button>
+                            <button onclick="lecheLimpiar()"
+                                style="height:42px; padding:0 14px; background:none; border:1px solid #ccc; border-radius:8px; cursor:pointer; color:var(--danger);"
+                                title="Descartar borrador">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table style="font-size:13px;">
+                            <thead style="background:#f1f5f9;">
+                                <tr>
+                                    <th>Nro</th>
+                                    <th>Nombre</th>
+                                    <th>Bruto</th>
+                                    <th>Tobo</th>
+                                    <th>Neto</th>
+                                    <th>Quitar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leche_lista_body">
+                                <tr id="leche_empty_row">
+                                    <td colspan="4"
+                                        style="text-align:center; color:var(--text-muted); padding:25px; font-style:italic;">
+                                        Aún no hay entradas. Empieza a agregar vacas ↑</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN QUESO -->
+            <section id="sec_queso" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title"><i class="fas fa-cheese"></i> Producción Queso</h1>
+                </div>
+                <div class="card">
+                    <div class="row" style="margin-bottom:15px; display:flex; gap:15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label><i class="fas fa-calendar-alt"></i> Fecha de Producción:</label>
+                            <input type="date" id="q_fecha" class="input-form" style="background:#f0f7ff;" readonly>
+                            <small style="color:var(--secondary); font-weight:bold;">Se detectará de la foto.</small>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label><i class="fas fa-clock"></i> Turno:</label>
+                            <select id="q_turno" class="input-form">
+                                <option>MAÑANA</option>
+                                <option>TARDE</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-bottom:15px; display:flex; gap:15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label><i class="fas fa-weight"></i> Peso Total (kg):</label>
+                            <input type="number" id="q_peso" step="0.1" class="input-form" placeholder="Ej: 8.5" style="font-size:1.4em; font-weight:bold;">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label><i class="fas fa-tint"></i> Leche Usada (Litros):</label>
+                            <input type="number" id="q_leche" step="1" class="input-form" placeholder="Ej: 40" style="font-size:1.4em; font-weight:bold;">
+                        </div>
+                    </div>
+
+                    <div id="q_prev_box" style="display:none; text-align:center; margin-bottom:15px; border:2px dashed var(--secondary); border-radius:10px; padding:15px; background:rgba(var(--secondary-rgb), 0.05);">
+                        <img id="q_preview_img" src="" style="max-height:200px; border-radius:10px; box-shadow:0 10px 20px rgba(0,0,0,0.1);">
+                        <div id="q_photo_info" style="margin-top:10px; font-weight:bold; color:var(--primary);"></div>
+                    </div>
+
+                    <label class="btn-buscar" style="width:100%; margin-bottom:15px; cursor:pointer;">
+                        <i class="fas fa-camera"></i> TOMAR FOTO / SUBIR EVIDENCIA
+                        <input type="file" id="q_foto_input" accept="image/*" capture="environment" style="display:none;" onchange="procesarFotoQueso(event)">
+                    </label>
+
+                    <button class="btn-new"
+                        style="width:100%; height:60px; font-size:18px; justify-content: center; background:var(--accent); margin-top: 10px;"
+                        onclick="registrarQueso()">REGISTRAR PRODUCCIÓN</button>
+                </div>
+            </section>
+
+            <!-- SECCIÓN PARTOS -->
+            <section id="sec_partos" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title"><i class="fas fa-baby-carriage"></i> Registro de Partos</h1>
+                </div>
+
+                <!-- FORMULARIO DE PARTO -->
+                <div class="card" id="form_parto_card" style="margin-bottom:20px;">
+                    <h4 style="color:var(--primary-dark); margin:0 0 18px 0;"><i class="fas fa-plus-circle"></i> Nuevo
+                        Parto / Aborto</h4>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+
+                        <!-- Fecha -->
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-day"></i> Fecha del parto:</label>
+                            <input type="date" id="p_fecha" class="input-form">
+                        </div>
+
+                        <!-- Madre -->
+                        <div class="form-group" style="position:relative;">
+                            <label><i class="fas fa-cow"></i> Madre (buscar):</label>
+                            <input type="text" id="p_bus_madre" class="input-form" placeholder="Número o nombre..."
+                                oninput="partos_sugerir()">
+                            <div id="p_sug_madre" class="suggestion-box"
+                                style="display:none; position:absolute; background:white; border:1px solid #ddd; width:100%; border-radius:8px; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:200px; overflow-y:auto;">
+                            </div>
+                        </div>
+
+                        <!-- Info madre seleccionada -->
+                        <div class="form-group">
+                            <label><i class="fas fa-hashtag"></i> # Madre:</label>
+                            <input type="text" id="p_num_madre" class="input-form" readonly style="background:#f1f5f9;">
+                        </div>
+
+                        <!-- Sexo de cría -->
+                        <div class="form-group">
+                            <label><i class="fas fa-venus-mars"></i> Sexo de la cría:</label>
+                            <select id="p_sexo" class="input-form">
+                                <option value="Hembra">Hembra</option>
+                                <option value="Macho">Macho</option>
+                            </select>
+                        </div>
+
+                        <!-- Padre -->
+                        <div class="form-group">
+                            <label><i class="fas fa-male"></i> Padre (toro):</label>
+                            <input type="text" id="p_padre" class="input-form" placeholder="Número o nombre del toro">
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="form-group">
+                            <label><i class="fas fa-heartbeat"></i> Estado de la cría:</label>
+                            <select id="p_estado" class="input-form" onchange="partos_toggleEstado()">
+                                <option value="Vivo">Vivo</option>
+                                <option value="Muerto">Muerto</option>
+                            </select>
+                        </div>
+
+                        <!-- Peso al nacer -->
+                        <div class="form-group">
+                            <label><i class="fas fa-weight"></i> Peso al nacer (kg):</label>
+                            <input type="number" id="p_peso" class="input-form" step="0.1" min="0" placeholder="0.0">
+                        </div>
+
+                        <!-- Tipo evento -->
+                        <div class="form-group">
+                            <label><i class="fas fa-tag"></i> Tipo de evento:</label>
+                            <select id="p_tipo_evento" class="input-form">
+                                <option value="Parto">Parto</option>
+                                <option value="Aborto">Aborto</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!-- Número a asignar (sólo si vivo) -->
+                    <div id="p_seccion_num"
+                        style="margin-top:15px; background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:15px;">
+                        <h5 style="margin:0 0 12px 0; color:#16a34a;"><i class="fas fa-id-badge"></i> Asignación de
+                            número (cría viva)</h5>
+                        <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+                            <div class="form-group" style="margin:0; flex:1; min-width:150px;">
+                                <label>Número a asignar:</label>
+                                <input type="text" id="p_num_asignado" class="input-form" placeholder="Ej: 26001">
+                            </div>
+                            <button class="btn-new" onclick="partos_generarNumero()"
+                                style="height:46px; padding:0 16px; background:var(--secondary);">
+                                <i class="fas fa-magic"></i> Generar
+                            </button>
+                            <div class="form-group" style="margin:0; flex:1; min-width:180px;">
+                                <label>Nombre sugerido:</label>
+                                <input type="text" id="p_nombre_cria" class="input-form"
+                                    placeholder="Se genera automático">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="form-group" style="margin-top:15px;">
+                        <label><i class="fas fa-comment-alt"></i> Observaciones:</label>
+                        <textarea id="p_observacion" class="input-form" rows="2"
+                            placeholder="Ej: Parto distócico, gemelar, aborto en mes 7..."></textarea>
+                    </div>
+
+                    <button id="btn_registrar_parto" class="btn-new" onclick="partos_registrar()"
+                        style="width:100%; height:54px; font-size:16px; justify-content:center; margin-top:10px;">
+                        <i class="fas fa-check-circle"></i> REGISTRAR PARTO
+                    </button>
+                </div>
+
+                <!-- LISTA DE PARTOS RECIENTES -->
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h4 style="margin:0; color:var(--primary-dark);"><i class="fas fa-list"></i> Partos Recientes
+                        </h4>
+                        <button class="btn-opcion" onclick="partos_cargarLista()"><i class="fas fa-sync"></i>
+                            Actualizar</button>
+                    </div>
+                    <div class="table-container">
+                        <table style="font-size:12px;">
+                            <thead id="partos_lista_th" style="background:#f1f5f9;">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Madre</th>
+                                    <th>#Madre</th>
+                                    <th>Sexo</th>
+                                    <th>Estado</th>
+                                    <th>Número</th>
+                                    <th>Peso</th>
+                                    <th>Observ.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="partos_lista_body">
+                                <tr>
+                                    <td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">
+                                        Cargando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN REPRODUCCIÓN / SERVICIOS -->
+            <section id="sec_servicios" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title"><i class="fas fa-venus-mars"></i> Reproducción y Servicios</h1>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <button id="tab_s_monta" onclick="tabServicios('monta')" class="btn-opcion activo">MONTA / SÉMEN</button>
+                    <button id="tab_s_palpacion" onclick="tabServicios('palpacion')" class="btn-opcion">PALPACIONES</button>
+                    <button id="tab_s_historial" onclick="tabServicios('historial')" class="btn-opcion">HISTORIAL</button>
+                </div>
+
+                <!-- FORMULARIO DE MONTA / SERVICIO -->
+                <div id="s_monta_area" class="card">
+                    <h4 style="color:var(--primary-dark); margin:0 0 18px 0;"><i class="fas fa-plus-circle"></i> Registrar Servicio (Monta/IA)</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-day"></i> Fecha:</label>
+                            <input type="date" id="s_fecha" class="input-form">
+                        </div>
+                        <div class="form-group" style="position:relative;">
+                            <label><i class="fas fa-cow"></i> Hembra (buscar):</label>
+                            <input type="text" id="s_bus_hembra" class="input-form" placeholder="Número o nombre..." oninput="servicios_sugerir('hembra')">
+                            <div id="s_sug_hembra" class="suggestion-box" style="display:none; position:absolute; background:white; border:1px solid #ddd; width:100%; border-radius:8px; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:200px; overflow-y:auto;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-hashtag"></i> # Hembra:</label>
+                            <input type="text" id="s_num_hembra" class="input-form" readonly style="background:#f1f5f9;">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-tag"></i> Tipo:</label>
+                            <select id="s_tipo" class="input-form">
+                                <option value="Monta Natural">Monta Natural</option>
+                                <option value="Inseminación Artificial">Inseminación Artificial</option>
+                                <option value="Transferencia de Embriones">Transferencia de Embriones</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-male"></i> Toro / Semen:</label>
+                            <input type="text" id="s_toro" class="input-form" placeholder="Nombre o número del toro">
+                        </div>
+                    </div>
+                    <button id="btn_registrar_servicio" class="btn-new" onclick="servicios_registrarServicio()" style="width:100%; height:54px; font-size:16px; justify-content:center; margin-top:20px;">
+                        <i class="fas fa-check-circle"></i> REGISTRAR SERVICIO
+                    </button>
+                </div>
+
+                <!-- FORMULARIO DE PALPACIÓN -->
+                <div id="s_palpacion_area" class="card" style="display:none;">
+                    <h4 style="color:var(--primary-dark); margin:0 0 18px 0;"><i class="fas fa-plus-circle"></i> Registro de Palpación</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-day"></i> Fecha:</label>
+                            <input type="date" id="pa_fecha" class="input-form">
+                        </div>
+                        <div class="form-group" style="position:relative;">
+                            <label><i class="fas fa-cow"></i> Hembra (buscar):</label>
+                            <input type="text" id="pa_bus_hembra" class="input-form" placeholder="Número o nombre..." oninput="servicios_sugerir('palpacion')">
+                            <div id="pa_sug_hembra" class="suggestion-box" style="display:none; position:absolute; background:white; border:1px solid #ddd; width:100%; border-radius:8px; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:200px; overflow-y:auto;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-hashtag"></i> # Hembra:</label>
+                            <input type="text" id="pa_num_hembra" class="input-form" readonly style="background:#f1f5f9;">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-stethoscope"></i> Diagnóstico:</label>
+                            <select id="pa_diagnostico" class="input-form" onchange="servicios_mostrarFechaParto(this.value)">
+                                <option value="Vacía">Vacía</option>
+                                <option value="Incierto">Incierto</option>
+                                <option value="Preñada">Preñada</option>
+                                <option value="Problemas Reproductivos">Problemas Reproductivos</option>
+                            </select>
+                        </div>
+                        <div id="pa_sec_parto" class="form-group" style="display:none;">
+                            <label><i class="fas fa-calendar-check"></i> Fecha Est. Parto:</label>
+                            <input type="date" id="pa_fecha_parto" class="input-form">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-user-md"></i> Técnico:</label>
+                            <input type="text" id="pa_tecnico" class="input-form" placeholder="Nombre del veterinario">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:15px;">
+                        <label><i class="fas fa-comment-alt"></i> Observaciones:</label>
+                        <textarea id="pa_observacion" class="input-form" rows="2" placeholder="Detalles de la palpación..."></textarea>
+                    </div>
+                    <button id="btn_registrar_palpacion" class="btn-new" onclick="servicios_registrarPalpacion()" style="width:100%; height:54px; font-size:16px; justify-content:center; margin-top:10px;">
+                        <i class="fas fa-check-circle"></i> REGISTRAR PALPACIÓN
+                    </button>
+                </div>
+
+                <!-- HISTORIAL UNIFICADO -->
+                <div id="s_historial_area" class="card" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h4 style="margin:0; color:var(--primary-dark);"><i class="fas fa-list"></i> Historial Reciente</h4>
+                        <button class="btn-opcion" onclick="servicios_cargarHistorialGral()"><i class="fas fa-sync"></i> Actualizar</button>
+                    </div>
+                    <div class="table-container">
+                        <table style="font-size:12px;">
+                            <thead style="background:#f1f5f9;">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Animal</th>
+                                    <th>Nro</th>
+                                    <th>Evento</th>
+                                    <th>Detalle / Diagnóstico</th>
+                                    <th>Toro / Técnico</th>
+                                    <th>Observ.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicios_lista_body">
+                                <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section id="sec_bajas" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title"><i class="fas fa-arrow-down"></i> Bajas del Hato</h1>
+                </div>
+
+                <!-- FORMULARIO -->
+                <div class="card" style="margin-bottom:20px;">
+                    <h4 style="color:var(--danger,#dc2626); margin:0 0 18px 0;"><i class="fas fa-minus-circle"></i>
+                        Registrar Baja</h4>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+
+                        <!-- Fecha -->
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-day"></i> Fecha de baja:</label>
+                            <input type="date" id="b_fecha" class="input-form">
+                        </div>
+
+                        <!-- Animal -->
+                        <div class="form-group" style="position:relative;">
+                            <label><i class="fas fa-cow"></i> Animal (buscar):</label>
+                            <input type="text" id="b_bus" class="input-form" placeholder="Número o nombre..."
+                                oninput="bajas_sugerir()">
+                            <div id="b_sug" class="suggestion-box"
+                                style="display:none; position:absolute; background:white; border:1px solid #ddd; width:100%; border-radius:8px; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:200px; overflow-y:auto;">
+                            </div>
+                        </div>
+
+                        <!-- Número del animal (readonly) -->
+                        <div class="form-group">
+                            <label><i class="fas fa-hashtag"></i> # Animal:</label>
+                            <input type="text" id="b_num" class="input-form" readonly style="background:#f1f5f9;">
+                        </div>
+
+                        <!-- Tipo de baja -->
+                        <div class="form-group">
+                            <label><i class="fas fa-tag"></i> Tipo de baja:</label>
+                            <select id="b_tipo" class="input-form" onchange="bajas_toggleCampos()">
+                                <option value="Muerte">💀 Muerte</option>
+                                <option value="Venta">💰 Venta</option>
+                                <option value="Robo">🚨 Robo</option>
+                                <option value="Sacrificio">🔪 Sacrificio</option>
+                                <option value="Transferencia">🔄 Transferencia</option>
+                                <option value="Descarte">⛔ Descarte</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!-- CAMPOS DE MUERTE -->
+                    <div id="b_sec_muerte"
+                        style="margin-top:15px; background:#fff1f2; border:1px solid #fca5a5; border-radius:10px; padding:15px;">
+                        <h5 style="margin:0 0 12px 0; color:#dc2626;"><i class="fas fa-skull"></i> Detalles de Muerte
+                        </h5>
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                            <div class="form-group" style="margin:0;">
+                                <label>Causa de muerte:</label>
+                                <select id="b_causa" class="input-form">
+                                    <option value="Enfermedad">Enfermedad</option>
+                                    <option value="Parto complicado">Parto complicado</option>
+                                    <option value="Accidente">Accidente</option>
+                                    <option value="Predador">Predador</option>
+                                    <option value="Edad avanzada">Edad avanzada</option>
+                                    <option value="Envenenamiento">Envenenamiento</option>
+                                    <option value="Desconocida">Desconocida</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label>¿Tenía seguro?</label>
+                                <select id="b_seguro" class="input-form">
+                                    <option value="No">No</option>
+                                    <option value="Sí">Sí</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CAMPOS DE VENTA -->
+                    <div id="b_sec_venta"
+                        style="display:none; margin-top:15px; background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:15px;">
+                        <h5 style="margin:0 0 12px 0; color:#16a34a;"><i class="fas fa-dollar-sign"></i> Detalles de
+                            Venta</h5>
+                        <div
+                            style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+                            <div class="form-group" style="margin:0;">
+                                <label>Comprador:</label>
+                                <input type="text" id="b_comprador" class="input-form" placeholder="Nombre o empresa">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label>Precio total ($):</label>
+                                <input type="number" id="b_precio" class="input-form" step="0.01" min="0"
+                                    placeholder="0.00">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label>Peso de venta (kg):</label>
+                                <input type="number" id="b_peso_venta" class="input-form" step="0.1" min="0"
+                                    placeholder="0.0">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label>Nro. Guía de movilización:</label>
+                                <input type="text" id="b_guia" class="input-form" placeholder="Ej: GM-2026-0001">
+                            </div>
+                        </div>
+                        <!-- Precio por kg calculado -->
+                        <div style="margin-top:10px; font-size:13px; color:#16a34a; font-weight:bold;">
+                            <i class="fas fa-calculator"></i> Precio/kg: <span id="b_precio_kg">—</span>
+                        </div>
+                    </div>
+
+                    <!-- CAMPOS DE SACRIFICIO -->
+                    <div id="b_sec_sacrificio"
+                        style="display:none; margin-top:15px; background:#fefce8; border:1px solid #fde047; border-radius:10px; padding:15px;">
+                        <h5 style="margin:0 0 12px 0; color:#ca8a04;"><i class="fas fa-info-circle"></i> Detalles de
+                            Sacrificio</h5>
+                        <div class="form-group" style="margin:0;">
+                            <label>Motivo del sacrificio:</label>
+                            <select id="b_motivo_sacrificio" class="input-form">
+                                <option value="Consumo propio">Consumo propio</option>
+                                <option value="Enfermedad terminal">Enfermedad terminal</option>
+                                <option value="Improductividad">Improductividad</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones generales -->
+                    <div class="form-group" style="margin-top:15px;">
+                        <label><i class="fas fa-comment-alt"></i> Observaciones:</label>
+                        <textarea id="b_obs" class="input-form" rows="2"
+                            placeholder="Detalles adicionales..."></textarea>
+                    </div>
+
+                    <button id="btn_registrar_baja" class="btn-new" onclick="bajas_registrar()"
+                        style="width:100%; height:54px; font-size:16px; justify-content:center; margin-top:10px; background:var(--danger,#dc2626);">
+                        <i class="fas fa-check-circle"></i> REGISTRAR BAJA
+                    </button>
+                </div>
+
+                <!-- HISTORIAL DE BAJAS -->
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h4 style="margin:0; color:var(--primary-dark);"><i class="fas fa-list"></i> Historial de Bajas
+                        </h4>
+                        <button class="btn-opcion" onclick="bajas_cargarLista()"><i class="fas fa-sync"></i>
+                            Actualizar</button>
+                    </div>
+                    <div class="table-container">
+                        <table style="font-size:12px;">
+                            <thead style="background:#f1f5f9;">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Animal</th>
+                                    <th>Nro</th>
+                                    <th>Tipo</th>
+                                    <th>Causa/Comprador</th>
+                                    <th>Precio</th>
+                                    <th>Peso venta</th>
+                                    <th>Observ.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bajas_lista_body">
+                                <tr>
+                                    <td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">
+                                        Cargando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN ADMIN -->
+            <section id="sec_admin" class="seccion">
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="tab-controls" style="display:flex; gap:10px; align-items:center;">
+                        <h3 style="margin:0;"><i class="fas fa-database"></i> Datos de Tablas</h3>
+                        <select id="admin_tablas" class="btn-opcion" style="flex:1;"
+                            onchange="cargarTablaAdmin(this.value)">
+                            <option value="animales">Animales</option>
+                            <option value="control_leche">Control Leche</option>
+                            <option value="partos">Partos</option>
+                            <option value="servicios">Servicios</option>
+                            <option value="palpaciones">Palpaciones</option>
+                            <option value="queso">Producción Queso</option>
+                        </select>
+                        <button class="btn-opcion" onclick="abrirConfigAdmin()" title="Ajustes de Columnas">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button class="btn-opcion" style="background:#fef3c7; color:#92400e;"
+                            onclick="document.getElementById('modal_reglas').style.display='flex'"
+                            title="Ver Reglas Ganaderas">
+                            <i class="fas fa-lightbulb"></i> Reglas
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div id="admin_save_bar"
+                        style="display:none; background: #fffbeb; border: 1px solid #fcd34b; padding: 10px; border-radius: 8px; margin-bottom: 15px; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 13px; color: #92400e; font-weight: 600;">Hay cambios sin guardar</span>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-new" style="background:#059669; padding: 5px 15px; font-size:12px;"
+                                onclick="guardarCambiosLote()">GUARDAR TODO</button>
+                            <button class="btn-opcion" style="padding: 5px 15px; font-size:12px;"
+                                onclick="cargarTablaAdmin(document.getElementById('admin_tablas').value)">DESCARTAR</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap: wrap; align-items: center;">
+                        <button id="btn_agregar_fila_admin" class="btn-new" style="flex:1; height:40px; font-size:14px; justify-content: center;"
+                            onclick="agregarFilaAdmin()">
+                            <i class="fas fa-plus"></i> AGREGAR FILA
+                        </button>
+                        <div id="admin_sort_box" style="display:flex; gap:10px; align-items: center;">
+                            <label
+                                style="font-size:12px; font-weight:bold; color:var(--text-main); margin-left:10px;">Orden:</label>
+                            <select id="admin_sort_col"
+                                onchange="cargarTablaAdmin(document.getElementById('admin_tablas').value)"
+                                class="btn-opcion" style="height:35px; padding:0 10px;">
+                                <option value="rowid" selected>Más Recientes</option>
+                                <option value="numero">Número (A-Z)</option>
+                                <option value="nombre">Nombre (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="tbl_admin" style="font-size:12px;">
+                            <thead id="admin_th"></thead>
+                            <tbody id="admin_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN CONFIGURACIONES -->
+            <section id="sec_config" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title"><i class="fas fa-cogs"></i> Configuración del Sistema</h1>
+                </div>
+                <div class="card" style="max-width: 900px; margin: 0 auto;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h3 style="color:var(--primary-dark); margin:0;"><i class="fas fa-list-ol"></i> Reglas de
+                            Categorización</h3>
+                        <button class="btn-new" onclick="abrirModalRegla()"><i class="fas fa-plus"></i> Nueva
+                            Regla</button>
+                    </div>
+                    <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">
+                        Nota: El sistema evalúa las reglas de <b>arriba hacia abajo</b>. La primera regla que coincida
+                        con el animal será la categoría sugerida.
+                    </p>
+                    <div class="table-container">
+                        <table style="font-size:12px;">
+                            <thead style="background:#f1f5f9;">
+                                <tr>
+                                    <th>Orden</th>
+                                    <th>Categoría</th>
+                                    <th>Sexo</th>
+                                    <th>Días Mín.</th>
+                                    <th>Días Máx.</th>
+                                    <th>M. Parto</th>
+                                    <th>Preñez</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista_reglas_editables">
+                                <!-- Llenado dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn-new" onclick="guardarConfigReglas()"
+                        style="width:100%; justify-content:center; height:50px; margin-top:20px;">
+                        <i class="fas fa-save"></i> GUARDAR TODOS LOS CAMBIOS
+                    </button>
+                </div>
+            </section>
+
+            <!-- SECCIÓN MANUAL DE USUARIO -->
+            <section id="sec_manual" class="seccion">
+                <div class="section-header">
+                    <h1 class="section-title">Manual de Usuario</h1>
+                </div>
+                <div class="card" style="padding: 30px; font-size: 15px; line-height: 1.6; color: var(--text-main);">
+                    <h2 style="color: var(--primary-dark); border-bottom: 2px solid #eee; padding-bottom: 10px;">SISGAN PRO v5</h2>
+                    <p>Bienvenidos a <b>SISGAN PRO</b> (Sistema Ganadero Profesional de Hacienda La Mapora), la herramienta integral para la gestión y control de su hato ganadero.</p>
+                    
+                    <h3 style="color: var(--secondary); margin-top: 25px;"><i class="fas fa-home"></i> 1. Panel Principal (Dashboard)</h3>
+                    <p>El Panel Principal le ofrecerá un vistazo rápido a la situación actual de su rebaño:</p>
+                    <ul>
+                        <li><b>Indicadores Globales</b>: Número total de animales vivos y cantidad total de leche producida en el día.</li>
+                        <li><b>Próximos Partos</b>: Vacas que tienen fecha estimada de parto programada para los próximos 60 días.</li>
+                    </ul>
+
+                    <h3 style="color: var(--secondary); margin-top: 25px;"><i class="fas fa-cow"></i> 2. Módulo de Animales (Fichas)</h3>
+                    <p>Gestione todo el inventario de su hato.</p>
+                    <ul>
+                        <li><b>Buscador Rápido</b>: Escriba el código o nombre. Resultados muestran Sexo, Raza y Estatus codificado por color (Verde = Sano/Vivo, Rojo = Muerto, Amarillo/Ámbar = Vendido).</li>
+                        <li><b>Listado Completo</b>: Filtre por Sexo, Estatus, Lote y Tipo.</li>
+                        <li><b>Agregar Nuevo Animal</b>: Botón <b>+ Nuevo</b>. Puede "Generar" el próximo número automáticamente.</li>
+                    </ul>
+
+                    <h3 style="color: var(--secondary); margin-top: 25px;"><i class="fas fa-edit"></i> 3. Ficha Detallada del Animal</h3>
+                    <p>Información profunda y herramientas rápidas.</p>
+                    <ul>
+                        <li><b>Datos Generales</b>: Modifique nombre, raza, lote, tipo, estatus, genealogía.</li>
+                        <li><b>Gestión Visual</b>: Suba fotos del animal y su hierro (señas).</li>
+                        <li><b>Estadísticas</b>: Total de partos, sumatoria de litros de leche y promedio histórico.</li>
+                        <li><b>Acciones Rápidas</b>: Botones de GUARDAR, + PARTO, + PESAJE, + SERVICIO sin salir de la vista.</li>
+                    </ul>
+
+                    <h3 style="color: var(--secondary); margin-top: 25px;"><i class="fas fa-tint"></i> 4. Control Lechero</h3>
+                    <p>Para usarse directamente durante la rutina de ordeño.</p>
+                    <ul>
+                        <li>Seleccione el turno "Mañana" o "Tarde", busque al animal y cargue su peso diario.</li>
+                        <li><b>Borrador Temporal</b>: Evita pérdidas si falla internet. Permite cargar datos muy rápido.</li>
+                        <li><b>Función OCR</b>: Use la cámara (<i class="fas fa-camera"></i>) para leer el peso de la balanza con inteligencia artificial.</li>
+                    </ul>
+
+                    <h3 style="color: var(--secondary); margin-top: 25px;"><i class="fas fa-cheese"></i> 5. Producción de Quesos y <i class="fas fa-venus-mars"></i> 6. Servicios</h3>
+                    <ul>
+                        <li><b>Quesos</b>: Registre el queso producido (peso total) conectándolo con un turno o equipo.</li>
+                        <li><b>Servicios</b>: Indique fecha, tipo (Monta, Inseminación), Toro o pajuela utilizada.</li>
+                    </ul>
+
+                    <h3 style="color: var(--secondary); margin-top: 25px;"><i class="fas fa-baby-carriage"></i> 7. Partos y <i class="fas fa-arrow-down"></i> 8. Bajas</h3>
+                    <ul>
+                        <li><b>Partos</b>: Busque madre, asigne estado (Vivo/Muerto). Si es "Vivo", el sistema sugerirá un nombre y le permitirá crear su nueva ficha rápidamente.</li>
+                        <li><b>Bajas</b>: Seleccione tipo (Muerte, Venta, etc.). Llenar datos como Causa o Comprador actualizará su Estatus automáticamente aislandolo del inventario activo.</li>
+                    </ul>
+
+                    <h3 style="color: var(--secondary); margin-top: 25px;"><i class="fas fa-database"></i> 9. Administración (Tipo Excel)</h3>
+                    <p>Herramienta para editar lotes masivos rápidamente.</p>
+                    <ul>
+                        <li>Seleccione columnas, ordene y filtre como en Excel.</li>
+                        <li>Doble clic / tocar en celdas para editar atributos (se ponen de color naranja). Presione "Guardar todo".</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR REGLA -->
+    <div id="modal_editar_regla"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:7000; align-items:center; justify-content:center; padding:20px;">
+        <div class="card" style="width:100%; max-width:500px; position:relative;">
+            <span style="position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#999;"
+                onclick="document.getElementById('modal_editar_regla').style.display='none'">&times;</span>
+            <h3 style="margin-top:0; color:var(--primary);"><i class="fas fa-edit"></i> <span
+                    id="modo_regla_titulo">Editar Regla</span></h3>
+
+            <input type="hidden" id="regla_id">
+
+            <div class="form-group">
+                <label>Nombre de Categoría:</label>
+                <input type="text" id="r_nombre" class="input-form">
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Sexo Requerido:</label>
+                    <select id="r_sexo" class="input-form">
+                        <option value="Ambos">Ambos</option>
+                        <option value="Hembra">Hembra</option>
+                        <option value="Macho">Macho</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Preñez Requerida:</label>
+                    <select id="r_prenez" class="input-form">
+                        <option value="Cualquiera">Indiferente</option>
+                        <option value="Obligatorio">Debe estar preñada</option>
+                        <option value="Prohibido">NO debe estar preñada</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>Días Mínimos:</label>
+                    <input type="number" id="r_dias_min" class="input-form">
+                </div>
+                <div class="form-group">
+                    <label>Días Máximos:</label>
+                    <input type="number" id="r_dias_max" class="input-form" placeholder="Dejar vacío p/ infinito">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Meses desde Último Parto (Máximo):</label>
+                <input type="number" id="r_parto" class="input-form" placeholder="Dejar en blanco si no aplica">
+            </div>
+
+            <button class="btn-new" onclick="guardarReglaIndividual()"
+                style="width:100%; justify-content:center; height:50px; margin-top:20px;">
+                <i class="fas fa-check"></i> LISTO
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL OCR (Peso) -->
+    <div id="modal_ocr"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:5000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div
+            style="background:white; padding:25px; border-radius:20px; width:100%; max-width:400px; position:relative;">
+            <span style="position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#999;"
+                onclick="cerrarOCR()">&times;</span>
+            <h3 style="margin-top:0;">Captura de Peso</h3>
+            <div class="ocr-preview" id="ocr_prev"><i class="fas fa-camera fa-4x" style="color:#ddd;"></i></div>
+            <div id="ocr_loading" style="display:none; text-align:center; padding:15px;">
+                <i class="fas fa-spinner fa-spin fa-2x"
+                    style="color:var(--primary);"></i><br><small>Procesando imagen (Tesseract)...</small>
+                <div id="ocr_retry" style="display:none; margin-top:10px;">
+                    <p style="font-size:12px; color:var(--text-muted);">Está tardando más de lo normal...</p>
+                    <button class="btn-new" style="background:#888; font-size:12px; height:35px;" onclick="cerrarOCR()">INGRESAR PESO A MANO</button>
+                </div>
+            </div>
+            <label class="btn-buscar" id="btn_ocr_camera">
+                <i class="fas fa-camera"></i> TOMAR FOTO
+                <input type="file" accept="image/*" capture="environment" style="display:none;"
+                    onchange="procesarFoto(event)">
+            </label>
+        </div>
+    </div>
+
+    <!-- MODAL VER FOTO -->
+    <div id="modal_ver_foto"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:6000; align-items:center; justify-content:center; padding:10px; box-sizing:border-box;">
+        <div style="position:relative; width:100%; max-width:600px; text-align:center;">
+            <span style="position:absolute; top:-40px; right:0; font-size:40px; cursor:pointer; color:white;"
+                onclick="document.getElementById('modal_ver_foto').style.display='none'">&times;</span>
+            <img id="img_ver_foto" src="" style="width:100%; border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <div style="color:white; margin-top:10px; font-weight:bold;">Evidencia Fotográfica</div>
+        </div>
+    </div>
+
+    <!-- MODAL EVENTO RÁPIDO (+Parto, +Pesaje) -->
+    <div id="modal_evento"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:4000; align-items:center; justify-content:center; padding:20px;">
+        <div class="card" style="width:100%; max-width:450px; position:relative;">
+            <span style="position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#999;"
+                onclick="cerrarModalRapido()">&times;</span>
+            <h3 id="m_titulo" style="margin-top:0; color:var(--primary);">Registrar Evento</h3>
+            <p id="m_info" style="font-weight:bold; margin-bottom:20px;"></p>
+
+            <!-- Inputs para Parto -->
+            <div id="m_parto_inputs" style="display:none;">
+                <div class="form-group"><label>Fecha Parto</label><input type="date" id="m_fecha_p"
+                        class="input-busqueda"></div>
+                <div class="form-group"><label>Número Cría</label><input type="text" id="m_cria_num"
+                        class="input-busqueda" placeholder="Ej: 24050"></div>
+                <div class="form-group">
+                    <label>Sexo Cría</label>
+                    <select id="m_cria_sexo" class="input-busqueda">
+                        <option value="Hembra">Hembra</option>
+                        <option value="Macho">Macho</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Inputs para Pesaje -->
+            <div id="m_leche_inputs" style="display:none;">
+                <div class="form-group">
+                    <label>Peso (kg)</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="m_peso" step="0.1" class="input-busqueda"
+                            style="font-size:24px; font-weight:bold;">
+                        <button class="btn-new" style="width:60px; background:var(--sidebar-bg);"
+                            onclick="abrirOCR('m_peso')"><i class="fas fa-camera"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn_guardar_evento_rapido" class="btn-new" onclick="registrarEventoRapido()"
+                style="width:100%; justify-content:center; height:50px; margin-top:10px;">
+                <i class="fas fa-save"></i> GUARDAR EVENTO
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL REGLAS CATEGORIZACIÓN -->
+    <div id="modal_reglas"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:6000; align-items:center; justify-content:center; padding:20px;">
+        <div class="card"
+            style="max-width:600px; width:95%; max-height:90vh; overflow-y:auto; border-top:4px solid #fcd34b; position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="margin:0; font-size:18px; color:#92400e;"><i class="fas fa-lightbulb"></i> Reglas Activas
+                </h2>
+                <i class="fas fa-times" style="cursor:pointer; color:#999; font-size:24px;"
+                    onclick="document.getElementById('modal_reglas').style.display='none'"></i>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Puedes ajustar los límites en días
+                desde el menú Configuración.</p>
+            <div class="table-container" id="tabla_limites_dinamicos">
+                <!-- Se llena con JS -->
+            </div>
+            <button class="btn-new" onclick="document.getElementById('modal_reglas').style.display='none'"
+                style="width:100%; justify-content:center; margin-top:20px; background:#fcd34b; color:#92400e; border:none;">ENTENDIDO</button>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIGURACIÓN ADMIN -->
+    <div id="modal_admin_config"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:5000; align-items:center; justify-content:center; padding:20px;">
+        <div
+            style="background:white; padding:25px; border-radius:20px; width:100%; max-width:450px; position:relative;">
+            <span style="position:absolute; top:15px; right:20px; font-size:30px; cursor:pointer; color:#999;"
+                onclick="cerrarConfigAdmin()">&times;</span>
+            <h3 style="margin-top:0;">Configurar Columnas</h3>
+            <p style="font-size:14px; color:#666; margin-bottom:20px;">Selecciona las columnas que deseas ver en la
+                tabla.</p>
+            <div id="admin_config_list"
+                style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; max-height:300px; overflow-y:auto; padding-right:10px; margin-bottom:20px;">
+                <!-- Checkboxes cargados por JS -->
+            </div>
+            <button class="btn-new" onclick="guardarConfigAdmin()"
+                style="width:100%; justify-content:center; height:50px; font-size:16px;">
+                <i class="fas fa-save"></i> GUARDAR CONFIGURACIÓN
+            </button>
+        </div>
+    </div>
+
+    <!-- DROP DOWN DE FILTRO ESTILO EXCEL -->
+    <div id="admin_filter_dropdown" class="admin-filter-dropdown">
+        <input type="text" class="admin-filter-search" placeholder="Buscar..."
+            oninput="filtrarListaValoresUnicos(this.value)">
+        <div class="admin-filter-list" id="admin_filter_list">
+            <!-- Valores cargados por JS -->
+        </div>
+        <div style="display:flex; justify-content: space-between; gap:5px; margin-top:5px;">
+            <button class="btn-new" style="flex:1; font-size:10px; padding:4px;"
+                onclick="aplicarFiltroColumna()">ACEPTAR</button>
+            <button class="btn-new" style="flex:1; font-size:10px; padding:4px; background:#94a3b8;"
+                onclick="cerrarFiltroColumna()">CANCELAR</button>
+        </div>
+    </div>
+
+    <script>
+        /* 
+           VARIABLES DE ESTADO
+           Aquí guardamos información que la app necesita recordar mientras está abierta.
+        */
+        let token = localStorage.getItem('s_pro_token'); // El "pase de entrada" del usuario
+        let currentUser = null;    // Datos del usuario que inició sesión
+        let listaAnimales = [];    // La lista resumida para el buscador (solo número y nombre)
+        let listaAnimalesCompleta = []; // NUEVO: Contiene todos los datos para filtros avanzados
+        let ordeñoActual = 'M';    // 'M' para Mañana, 'T' para Tarde
+        let selAnimal = null;      // El animal que tenemos seleccionado actualmente
+        let ocrTarget = null;      // Cuál campo de texto recibirá el peso detectado por la cámara
+        let pendingChanges = {};   // NUEVO: Para seguimiento de ediciones en lote
+
+        const CRITERIOS_CATEGORIZACION = { // Dejamos esto solo como referencia o lo borramos, no se usa
+        };
+
+        // VARIABLES DINÁMICAS DE CONFIGURACIÓN
+        let configReglas = [
+            { id: 1, nombre: 'Ternero', sexo: 'Ambos', min_dias: 0, max_dias: 260, parto_meses: 999, preñez: 'Cualquiera' },
+            { id: 2, nombre: 'Parida preñada', sexo: 'Hembra', min_dias: 0, max_dias: 99999, parto_meses: 8, preñez: 'Obligatorio' },
+            { id: 3, nombre: 'Parida vacia', sexo: 'Hembra', min_dias: 0, max_dias: 99999, parto_meses: 8, preñez: 'Prohibido' },
+            { id: 4, nombre: 'Preñada', sexo: 'Hembra', min_dias: 651, max_dias: 99999, parto_meses: 999, preñez: 'Obligatorio' },
+            { id: 5, nombre: 'Vacia', sexo: 'Hembra', min_dias: 1081, max_dias: 99999, parto_meses: 999, preñez: 'Prohibido' },
+            { id: 6, nombre: 'Toro', sexo: 'Macho', min_dias: 1081, max_dias: 99999, parto_meses: 999, preñez: 'Cualquiera' },
+            { id: 7, nombre: 'Novillas vientre', sexo: 'Hembra', min_dias: 651, max_dias: 1080, parto_meses: 999, preñez: 'Cualquiera' },
+            { id: 8, nombre: 'Machos engorda', sexo: 'Macho', min_dias: 651, max_dias: 1080, parto_meses: 999, preñez: 'Cualquiera' },
+            { id: 9, nombre: 'Novillas levante', sexo: 'Hembra', min_dias: 366, max_dias: 650, parto_meses: 999, preñez: 'Cualquiera' },
+            { id: 10, nombre: 'Machos levante', sexo: 'Macho', min_dias: 366, max_dias: 650, parto_meses: 999, preñez: 'Cualquiera' },
+            { id: 11, nombre: 'Novillas destete', sexo: 'Hembra', min_dias: 261, max_dias: 365, parto_meses: 999, preñez: 'Cualquiera' },
+            { id: 12, nombre: 'Machos destete', sexo: 'Macho', min_dias: 261, max_dias: 365, parto_meses: 999, preñez: 'Cualquiera' }
+        ];
+
+        function sugerirCategoria(animal, ultimaPalpacion, ultimoParto) {
+            const fechaVal = animal.fecha_nac || animal.fecha_nacimiento;
+            if (!fechaVal || fechaVal === '...' || String(fechaVal).trim() === "") return null;
+
+            const hoy = new Date();
+            const nac = new Date(fechaVal);
+            if (isNaN(nac.getTime())) return null;
+
+            const diasDeVida = Math.ceil((hoy - nac) / (1000 * 60 * 60 * 24));
+            const s = (animal.sexo || '').toUpperCase();
+            const sexoAdj = (s === 'HEMBRA' || s === 'H') ? 'Hembra' : 'Macho';
+            const mesesDesdeParto = ultimoParto ? (hoy - new Date(ultimoParto.fecha)) / (1000 * 60 * 60 * 24 * 30) : 999;
+            const estaPreñada = ultimaPalpacion && (String(ultimaPalpacion.diagnostico).toUpperCase() === 'PREÑADA' || String(ultimaPalpacion.preñez).toUpperCase() === 'SI' || String(ultimaPalpacion.estatus).toUpperCase() === 'PREÑADA');
+
+            for (let regla of configReglas) {
+                // Filtro 1: Sexo
+                if (regla.sexo !== 'Ambos' && regla.sexo !== sexoAdj) continue;
+                // Filtro 2: Días de Vida
+                if (diasDeVida < regla.min_dias || diasDeVida > regla.max_dias) continue;
+                // Filtro 3: Meses post-parto
+                if (mesesDesdeParto > (regla.parto_meses || 999)) continue;
+                // Filtro 4: Preñez
+                if (regla.preñez === 'Obligatorio' && !estaPreñada) continue;
+                if (regla.preñez === 'Prohibido' && estaPreñada) continue;
+
+                // Si sobrevive a todos los filtros, es su categoría
+                return regla.nombre;
+            }
+
+            return null; // Si no encaja en ninguna
+        }
+
+        /* 
+           NUEVA FUNCIÓN DE FILTRO: formatearFecha
+           Convierte '2026-02-28' en '28-feb-2026' para todo el sistema.
+        */
+        function formatearFecha(dateStr) {
+            if (!dateStr) return '-';
+            
+            // Si ya viene en formato DD-MM-YYYY, lo devolvemos tal cual o lo procesamos
+            if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+                return dateStr;
+            }
+
+            const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+            // Forzamos el mediodía para evitar que el cambio de zona horaria nos mueva el día
+            const d = new Date(dateStr + 'T12:00:00');
+            if (isNaN(d.getTime())) return dateStr; 
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = meses[d.getMonth()];
+            const anio = d.getFullYear();
+            return `${dia}-${mes}-${anio}`;
+        }
+
+        // Función para asegurar que lo que se guarde siempre sea YYYY-MM-DD
+        function normalizarFechaISO(val) {
+            if (!val) return val;
+            const s = val.trim();
+            // Si es DD-MM-YYYY o DD/MM/YYYY
+            const match = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+            if (match) {
+                return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+            }
+            return s;
+        }
+
+        // Esta función se ejecuta apenas abres la página en el navegador
+        window.onload = () => {
+            // Si ya teníamos un token guardado, intentamos entrar directamente
+            if (token) {
+                try {
+                    currentUser = JSON.parse(atob(token)); // Decodificamos el token para saber quién es
+                    initApp(); // Arrancamos la aplicación
+                } catch (e) {
+                    logout(); // Si el token falló, sacamos al usuario
+                }
+            }
+        };
+
+        /* 
+           FUNCIÓN DE LOGIN
+           Se comunica con el servidor para verificar si el usuario y la clave son correctos.
+        */
+        async function intentarLogin() {
+            const btn = document.getElementById('btn_login');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> INGRESANDO...';
+            try {
+                const u = document.getElementById('log_user').value;
+                const p = document.getElementById('log_pass').value;
+
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario: u, password: p })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    token = data.token;
+                    localStorage.setItem('s_pro_token', token);
+                    currentUser = JSON.parse(atob(token));
+                    initApp();
+                } else {
+                    document.getElementById('log_error').innerText = data.error;
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'INGRESAR AL SISTEMA';
+            }
+        }
+
+        /*
+           GESTIÓN DE LA INTERFAZ (Navegación)
+        */
+
+        // Muestra la app y oculta el login
+        // Muestra la app y oculta el login
+        async function initApp() {
+            document.getElementById('login_screen').style.display = 'none';
+            document.getElementById('app').classList.add('active');
+            await cargarConfigReglasBase(); // Cargar reglas dinámicas primero
+            cargarDatosBasicos(); // Traemos la lista de animales del servidor
+            cargarTunnel();       // Obtenemos la URL de acceso externo
+            cargarDashboard();    // NUEVO: Llenamos las estadísticas de inicio
+        }
+
+        /* 
+           NUEVO: LLENA EL DASHBOARD CON DATOS REALES 
+           Muestra cuántos animales hay, cuánta leche se ha registrado hoy y los partos futuros.
+        */
+        async function cargarDashboard() {
+            try {
+                const res = await fetch('/api/dashboard');
+                const data = await res.json();
+
+                document.getElementById('st_animales').innerText = data.animales;
+                const prodTit = document.querySelector('#prod_titulos');
+                const prodDiv = document.querySelector('#prod_container');
+                if (data.produccion) {
+                    const leche7 = data.produccion.diario.reduce((s,d) => s + (d.leche || 0), 0);
+                    const diasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+                    const ratio = data.produccion.queso_total > 0 ? (leche7 / data.produccion.queso_total).toFixed(2) : '--';
+                    // Titles row
+                    let titHtml = '<div>Total</div>';
+                    data.produccion.diario.forEach((d,i) => {
+                        const dt = new Date(d.fecha + 'T12:00:00');
+                        titHtml += `<div>${diasSem[dt.getDay()]||''}<br><span style="font-size:8px;">${d.fecha.slice(5)}</span></div>`;
+                    });
+                    prodTit.innerHTML = titHtml;
+                    // Data row
+                    let html = `<div style="display:grid; grid-template-columns: repeat(8, 1fr); gap:4px; width:100%;">`;
+                    html += `<div style="background:var(--bg); border-radius:6px; padding:6px 4px; text-align:center;">
+                        <div style="font-weight:700; font-size:15px; color:var(--secondary);">${leche7.toFixed(0)}</div>
+                        <div style="font-size:11px; color:var(--primary-dark); font-weight:600;">${data.produccion.queso_total.toFixed(1)} kg</div>
+                        <div style="font-size:9px; margin-top:2px; color:#888;">lts/kg ${ratio}</div>
+                    </div>`;
+                    data.produccion.diario.forEach((d,i) => {
+                        const q = d.queso || 0;
+                        html += `<div style="background:var(--bg); border-radius:6px; padding:5px 3px; text-align:center;">
+                            <div style="font-weight:600; font-size:14px; color:var(--secondary);">${d.leche||0}</div>
+                            <div style="font-size:11px; color:var(--primary-dark);">${q.toFixed(1)}</div>
+                        </div>`;
+                    });
+                    html += `</div>`;
+                    prodDiv.innerHTML = html;
+                }
+
+                const tableBody = document.querySelector('#tbl_proximos tbody');
+                if (data.proximos && data.proximos.length > 0) {
+                    tableBody.innerHTML = data.proximos.map(p => `
+                        <tr>
+                            <td><b>${p.nombre}</b> <small>#${p.numero}</small></td>
+                            <td style="color:var(--primary); font-weight:bold;">${formatearFecha(p.fecha_parto_est)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#999; padding:15px;">No hay partos próximos registrados.</td></tr>';
+                }
+
+                const dc = document.querySelector('#desglose_container');
+                if (dc) {
+                    function makeSection(title, items, labelKey, valueKey) {
+                        let html = `<div style="background:var(--bg); border-radius:8px; padding:12px;">
+                            <h4 style="margin:0 0 10px 0; font-size:13px; text-transform:uppercase; color:var(--text-muted);">${title}</h4>`;
+                        if (items && items.length > 0) {
+                            items.forEach(item => {
+                                const pct = ((item[valueKey] / (data.animales || 1)) * 100).toFixed(1);
+                                html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #eee;">
+                                    <span style="font-size:14px;">${item[labelKey]}</span>
+                                    <span style="font-weight:700; font-size:14px;">${item[valueKey]} <small style="font-weight:400; color:#999;">(${pct}%)</small></span>
+                                </div>`;
+                            });
+                        } else {
+                            html += `<div style="color:#999; font-size:13px; padding:8px 0;">Sin datos</div>`;
+                        }
+                        html += '</div>';
+                        return html;
+                    }
+                    dc.innerHTML = makeSection('Por Lote', data.lotes, 'lote', 'cantidad') +
+                        makeSection('Por Propietario', data.propietarios, 'propietario', 'cantidad');
+                }
+            } catch (e) { console.error("Error cargando dashboard", e); }
+        }
+
+        // Abre y cierra el menú lateral (Mobile)
+        function toggleNav() {
+            const sidebar = document.getElementById("mySidebar");
+            const overlay = document.getElementById("sidebarOverlay");
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // ESTA ES LA FUNCIÓN CLAVE DE LA SPA
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+            document.getElementById(id).classList.add('activa');
+
+            // Update active menu item
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const activeNav = document.querySelector(`.nav-item[onclick*="${id}"]`);
+            if (activeNav) activeNav.classList.add('active');
+
+            // Close sidebar on mobile
+            document.getElementById("mySidebar").classList.remove('open');
+            document.getElementById("sidebarOverlay").classList.remove('active');
+
+            if (id === 'sec_admin') cargarTablaAdmin('animales');
+            if (id === 'sec_fichas') tabFichas('buscar');
+            if (id === 'sec_partos') partos_inicializar();
+            if (id === 'sec_config') rellenarFormularioConfig();
+            if (id === 'sec_leche') lecheInicializar();
+            if (id === 'sec_bajas') bajas_inicializar();
+        }
+
+        // --- LÓGICA DE CONFIGURACIONES DINÁMICAS --- //
+        async function cargarConfigReglasBase() {
+            try {
+                const res = await fetch('/api/configuraciones/categorias_animales');
+                const data = await res.json();
+                if (data && data.success && data.data) {
+                    // Si el usuario tenía la config anterior (objeto en vez de array) la ignoramos
+                    if (Array.isArray(data.data)) {
+                        configReglas = data.data;
+                    }
+                }
+                actualizarTablaReglasVisual();
+            } catch (e) {
+                console.error("No se pudieron obtener configuraciones personalizadas, usando valores por defecto.");
+                actualizarTablaReglasVisual();
+            }
+        }
+
+        function rellenarFormularioConfig() {
+            renderTablaConfigReglas();
+        }
+
+        function renderTablaConfigReglas() {
+            const tbody = document.getElementById('lista_reglas_editables');
+            if (!tbody) return;
+            tbody.innerHTML = configReglas.map((r, i) => `
+                <tr>
+                    <td style="text-align:center;">
+                        <i class="fas fa-chevron-up" onclick="moverRegla(${i}, -1)" style="cursor:pointer; color:var(--text-muted); ${i === 0 ? 'visibility:hidden;' : ''}"></i><br>
+                        <b>${i + 1}</b><br>
+                        <i class="fas fa-chevron-down" onclick="moverRegla(${i}, 1)" style="cursor:pointer; color:var(--text-muted); ${i === configReglas.length - 1 ? 'visibility:hidden;' : ''}"></i>
+                    </td>
+                    <td style="font-weight:bold; color:var(--primary-dark);">${r.nombre}</td>
+                    <td>${r.sexo}</td>
+                    <td style="text-align:center;">${r.min_dias}</td>
+                    <td style="text-align:center;">${r.max_dias >= 99999 ? '∞' : r.max_dias}</td>
+                    <td style="text-align:center;">${r.parto_meses >= 999 ? 'N/A' : r.parto_meses}</td>
+                    <td style="text-align:center;">${r.preñez}</td>
+                    <td style="text-align:center; min-width:80px;">
+                        <i class="fas fa-edit" onclick="abrirModalRegla(${i})" style="color:var(--secondary); cursor:pointer; margin-right:10px;"></i>
+                        <i class="fas fa-trash-alt" onclick="borrarRegla(${i})" style="color:var(--danger); cursor:pointer;"></i>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function moverRegla(index, dir) {
+            if (index + dir < 0 || index + dir >= configReglas.length) return;
+            const temp = configReglas[index];
+            configReglas[index] = configReglas[index + dir];
+            configReglas[index + dir] = temp;
+            renderTablaConfigReglas();
+        }
+
+        function borrarRegla(index) {
+            if (confirm('¿Eliminar esta regla? Se borrará de la lista.')) {
+                configReglas.splice(index, 1);
+                renderTablaConfigReglas();
+            }
+        }
+
+        function abrirModalRegla(index = null) {
+            document.getElementById('modal_editar_regla').style.display = 'flex';
+            if (index !== null) {
+                document.getElementById('modo_regla_titulo').innerText = 'Editar Regla';
+                const r = configReglas[index];
+                document.getElementById('regla_id').value = index;
+                document.getElementById('r_nombre').value = r.nombre;
+                document.getElementById('r_sexo').value = r.sexo;
+                document.getElementById('r_prenez').value = r.preñez;
+                document.getElementById('r_dias_min').value = r.min_dias;
+                document.getElementById('r_dias_max').value = (r.max_dias >= 99999 ? '' : r.max_dias);
+                document.getElementById('r_parto').value = (r.parto_meses >= 999 ? '' : r.parto_meses);
+            } else {
+                document.getElementById('modo_regla_titulo').innerText = 'Nueva Regla';
+                document.getElementById('regla_id').value = '';
+                document.getElementById('r_nombre').value = 'Nueva Categoría';
+                document.getElementById('r_sexo').value = 'Ambos';
+                document.getElementById('r_prenez').value = 'Cualquiera';
+                document.getElementById('r_dias_min').value = 0;
+                document.getElementById('r_dias_max').value = '';
+                document.getElementById('r_parto').value = '';
+            }
+        }
+
+        function guardarReglaIndividual() {
+            const index = document.getElementById('regla_id').value;
+            const maxDiasStr = document.getElementById('r_dias_max').value;
+            const partoStr = document.getElementById('r_parto').value;
+
+            const r = {
+                id: Date.now(),
+                nombre: document.getElementById('r_nombre').value || 'Sin Nombre',
+                sexo: document.getElementById('r_sexo').value,
+                preñez: document.getElementById('r_prenez').value,
+                min_dias: parseInt(document.getElementById('r_dias_min').value) || 0,
+                max_dias: maxDiasStr === '' ? 99999 : parseInt(maxDiasStr),
+                parto_meses: partoStr === '' ? 999 : parseInt(partoStr)
+            };
+
+            if (index !== '') {
+                configReglas[parseInt(index)] = r;
+            } else {
+                configReglas.push(r);
+            }
+            document.getElementById('modal_editar_regla').style.display = 'none';
+            renderTablaConfigReglas();
+        }
+
+        async function guardarConfigReglas() {
+            try {
+                const res = await fetch('/api/configuraciones/categorias_animales', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(configReglas)
+                });
+                if (res.ok) {
+                    actualizarTablaReglasVisual();
+                    alert('Nuevas Reglas de Categorización Guardadas y Aplicadas.');
+                }
+            } catch (e) {
+                alert('Error al guardar la configuración: ' + e.message);
+            }
+        }
+
+        function actualizarTablaReglasVisual() {
+            const html = `
+                <table style="font-size:12px;">
+                    <thead style="background:#fffbeb; color:#92400e;">
+                        <tr><th>Categoría</th><th>Condiciones</th></tr>
+                    </thead>
+                    <tbody>
+                        ${configReglas.map(r => {
+                let conds = [];
+                if (r.sexo !== 'Ambos') conds.push(r.sexo);
+                if (r.min_dias > 0 || r.max_dias < 99999) conds.push(`Edad ${r.min_dias} - ${r.max_dias >= 99999 ? '∞' : r.max_dias} días`);
+                if (r.preñez === 'Obligatorio') conds.push('Preñada');
+                if (r.preñez === 'Prohibido') conds.push('NO Preñada');
+                if (r.parto_meses < 999) conds.push(`Últ. Parto <= ${r.parto_meses} meses`);
+                return `<tr><td><b>${r.nombre}</b></td><td>${conds.length ? conds.join(', ') : 'Cualquiera'}</td></tr>`;
+            }).join('')}
+                    </tbody>
+                </table>
+            `;
+            const tblC = document.getElementById('tabla_limites_dinamicos');
+            if (tblC) tblC.innerHTML = html;
+        }
+
+        async function cargarListaSimple(tabla) {
+            const res = await fetch(`/api/tablas/${tabla}`);
+            const json = await res.json();
+            const data = json.data || [];
+            const container = document.getElementById(`${tabla}_lista_body`);
+            const th = document.getElementById(`${tabla}_lista_th`);
+
+            if (data.length === 0) {
+                container.innerHTML = `<tr><td colspan="10">No hay registros en ${tabla}</td></tr>`;
+                return;
+            }
+
+            const cols = Object.keys(data[0]).filter(k => k !== 'id' && k !== 'creado_por' && k !== 'creado_en');
+            th.innerHTML = `<tr><th style="width:80px;">Acción</th>${cols.map(c => `<th>${c}</th>`).join('')}</tr>`;
+
+            container.innerHTML = data.map(row => {
+                const pkValue = (tabla === 'animales') ? row.numero : row.id;
+                return `<tr>
+                    <td style="text-align:center; display:flex; gap:5px; justify-content:center;">
+                        ${row.numero ? `<i class="fas fa-eye" style="color:var(--secondary); cursor:pointer;" onclick="verFicha('${row.numero}')"></i>` : ''}
+                        <i class="fas fa-check" style="color:var(--primary); cursor:pointer;" onclick="confirmarFila('${tabla}', '${pkValue}')"></i>
+                    </td>
+                    ${cols.map(c => {
+                    const cellId = `ls_cell_${tabla}_${pkValue}_${c}`;
+                    return `<td id="${cellId}" contenteditable="true" oninput="marcarModificado('${cellId}')" onblur="editarCelda('${tabla}', '${pkValue}', '${c}', this.innerText)">${row[c] || ''}</td>`;
+                }).join('')}
+                </tr>`;
+            }).join('');
+        }
+
+        function tabFichas(tab) {
+            document.getElementById('tab_f_buscar').classList.toggle('activo', tab === 'buscar');
+            document.getElementById('tab_f_todo').classList.toggle('activo', tab === 'todo');
+
+            const nuevoBtn = document.querySelector('.btn-new');
+            if (nuevoBtn) nuevoBtn.style.display = tab === 'nuevo' ? 'none' : 'flex';
+
+            document.getElementById('f_buscar_area').style.display = tab === 'buscar' ? 'block' : 'none';
+            document.getElementById('f_todo_area').style.display = tab === 'todo' ? 'block' : 'none';
+            document.getElementById('f_nuevo_area').style.display = tab === 'nuevo' ? 'block' : 'none';
+            document.getElementById('f_detalle_area').style.display = 'none';
+
+            if (tab === 'todo' && listaAnimalesCompleta.length === 0) {
+                cargarTodoAnimales();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('s_pro_token');
+            location.reload();
+        }
+
+        async function cargarDatosBasicos() {
+            const res = await fetch('/api/animales-produccion');
+            listaAnimales = await res.json();
+            document.getElementById('st_animales').innerText = listaAnimales.length;
+        }
+
+        async function cargarTunnel() {
+            const res = await fetch('/api/tunnel');
+            const data = await res.json();
+            if (data.url) {
+                document.getElementById('tunnel_url_box').style.display = 'block';
+                document.getElementById('tunnel_url').innerText = data.url;
+            }
+        }
+
+        function filtrarFichas() {
+            const q = document.getElementById('f_bus').value.toLowerCase();
+            const res = document.getElementById('f_resultados');
+            const tableContainer = document.getElementById('f_tabla_container');
+
+            if (q.length < 1) {
+                res.innerHTML = '';
+                tableContainer.style.display = 'none';
+                return;
+            }
+
+            const matches = listaAnimales.filter(a => 
+                String(a.numero).toLowerCase().includes(q) || 
+                String(a.nombre || '').toLowerCase().includes(q)
+            ).slice(0, 15);
+
+            if (matches.length > 0) {
+                tableContainer.style.display = 'block';
+                res.innerHTML = matches.map(a => `
+                    <tr>
+                        <td style="font-weight: 700;">${a.numero}</td>
+                        <td>${a.nombre}</td>
+                        <td>Hembra</td> <!-- Default or from data if available -->
+                        <td>-</td>
+                        <td><span class="badge-status status-sano">Sano</span></td>
+                        <td>
+                            <button class="btn-ficha" onclick="verFicha('${a.numero}')">
+                                <i class="fas fa-edit"></i> Ficha
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                res.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No se encontraron animales.</td></tr>';
+                tableContainer.style.display = 'block';
+            }
+        }
+
+        async function cargarTodoAnimales() {
+            try {
+                const res = await fetch('/api/tablas/animales');
+                const json = await res.json();
+                listaAnimalesCompleta = json.data || [];
+                actualizarSelectsFiltros();
+                aplicarFiltrosTodo();
+            } catch (e) {
+                console.error("Error cargando animales:", e);
+                document.getElementById('f_todo_resultados').innerHTML = '<tr><td colspan="7" style="color:red; text-align:center;">Error al cargar datos.</td></tr>';
+            }
+        }
+
+        function actualizarSelectsFiltros() {
+            const campos = ['sexo', 'estatus', 'lote', 'tipo'];
+            const ids = ['filt_sexo', 'filt_estatus', 'filt_lote', 'filt_tipo'];
+
+            campos.forEach((campo, idx) => {
+                const select = document.getElementById(ids[idx]);
+                const valores = [...new Set(listaAnimalesCompleta.map(a => a[campo]))].filter(v => v).sort();
+                select.innerHTML = '<option value="">TODOS</option>' + valores.map(v => `<option value="${v}">${v}</option>`).join('');
+            });
+        }
+
+        function aplicarFiltrosTodo() {
+            const fSexo = document.getElementById('filt_sexo').value;
+            const fEst = document.getElementById('filt_estatus').value;
+            const fLote = document.getElementById('filt_lote').value;
+            const fTipo = document.getElementById('filt_tipo').value;
+
+            const filtrados = listaAnimalesCompleta.filter(a => {
+                return (!fSexo || a.sexo === fSexo) &&
+                    (!fEst || a.estatus === fEst) &&
+                    (!fLote || a.lote === fLote) &&
+                    (!fTipo || a.tipo === fTipo);
+            });
+
+            document.getElementById('f_todo_count').innerText = `${filtrados.length} animales`;
+            const container = document.getElementById('f_todo_resultados');
+
+            if (filtrados.length === 0) {
+                container.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">No hay animales que coincidan.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = filtrados.map(a => `
+                <tr>
+                    <td style="font-weight: 700;">${a.numero}</td>
+                    <td>${a.nombre}</td>
+                    <td>${a.sexo || '-'}</td>
+                    <td>${a.raza || '-'}</td>
+                    <td>${a.lote || '-'}</td>
+                    <td>${a.tipo || '-'}</td>
+                    <td>
+                        <button class="btn-ficha" onclick="verFicha('${a.numero}')">
+                            <i class="fas fa-edit"></i> Ficha
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        async function verFicha(num) {
+            // Limpiamos el área de resultados antes de cargar (Regla: borrar lista al seleccionar)
+            document.getElementById('f_resultados').innerHTML = '';
+            document.getElementById('f_todo_resultados').innerHTML = '';
+
+            let a = null, pData = { partos: [], total_partos: 0 }, lData = [];
+
+            try {
+                // Traemos los datos básicos del animal
+                const resA = await fetch(`/api/detalle/${num}`);
+                if (resA.ok) a = await resA.json();
+
+                // Traemos los partos (Manejo de error: si falla, seguimos con lista vacía)
+                try {
+                    const resP = await fetch(`/api/partos/${num}`);
+                    if (resP.ok) pData = await resP.json();
+                } catch (e) { console.warn("Error cargando partos", e); }
+
+                // Traemos la leche (Manejo de error: si falla, seguimos con lista vacía - EVITA EL BLOQUEO)
+                try {
+                    const resL = await fetch(`/api/leche/${num}`);
+                    if (resL.ok) lData = await resL.json();
+                } catch (e) { console.warn("Error cargando leche", e); }
+
+                if (!a) return alert("No se pudo cargar la información del animal.");
+
+                document.getElementById('f_buscar_area').style.display = 'none';
+                document.getElementById('f_todo_area').style.display = 'none';
+                document.getElementById('f_detalle_area').style.display = 'block';
+
+                /* --- CÁLCULOS DE PRODUCCIÓN --- */
+                // Filtramos pesadas mayores que 0 para el promedio (Regla: sin tener en cuenta pesadas en 0)
+                const pesadasValidas = (lData || []).filter(l => l.kg > 0);
+                const totalLitros = pesadasValidas.reduce((acc, p) => acc + p.kg, 0);
+                const promedio = pesadasValidas.length > 0 ? (totalLitros / pesadasValidas.length).toFixed(2) : 0;
+
+                // Cálculo de Lactancia (Diferencia de días entre la primera y última pesada registrada)
+                let duracionLactancia = 0;
+                if ((lData || []).length > 0) {
+                    const fechas = lData.map(l => new Date(l.fecha)).sort((a, b) => a - b);
+                    const diffTime = Math.abs(fechas[fechas.length - 1] - fechas[0]);
+                    duracionLactancia = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                }
+
+                // RESUMEN HISTÓRICO COMPLETO
+                const historialPartosLen = (pData.partos || []).length;
+
+                // Generamos el formulario de edición detallado
+                document.getElementById('f_detalle_content').innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:var(--bg-light); padding:10px; border-radius:10px;">
+                    <h2 style="color:var(--primary); margin:0; font-size:1.4rem;"><i class="fas fa-edit"></i> Ficha: ${a.nombre}</h2>
+                    <span class="badge badge-primary" style="font-size:16px;">#${a.numero}</span>
+                </div>
+
+                <!-- ÁREA DE FOTOS Y DATOS BÁSICOS -->
+                <div style="display:grid; grid-template-columns: 1fr 2fr; gap:15px; margin-bottom:20px;">
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="card" style="padding:8px; text-align:center; border:1px solid #eee;">
+                            <p style="font-size:10px; font-weight:bold; margin-bottom:5px; margin-top:0;">ANIMAL</p>
+                            <div id="prev_foto_animal" class="ocr-preview" style="height:90px; cursor:pointer;" onclick="document.getElementById('in_foto_animal').click()">
+                                ${a.foto_animal ? `<img src="/uploads/${a.foto_animal}">` : '<i class="fas fa-camera fa-lg" style="color:#ccc;"></i>'}
+                            </div>
+                            <input type="file" id="in_foto_animal" hidden onchange="previsualizarYSubir(this, 'foto_animal', '${a.numero}')">
+                        </div>
+                        <div class="card" style="padding:8px; text-align:center; border:1px solid #eee;">
+                            <p style="font-size:10px; font-weight:bold; margin-bottom:5px; margin-top:0;">HIERRO</p>
+                            <div id="prev_foto_hierro" class="ocr-preview" style="height:90px; cursor:pointer;" onclick="document.getElementById('in_foto_hierro').click()">
+                                ${a.foto_hierro ? `<img src="/uploads/${a.foto_hierro}">` : '<i class="fas fa-fire fa-lg" style="color:#ccc;"></i>'}
+                            </div>
+                            <input type="file" id="in_foto_hierro" hidden onchange="previsualizarYSubir(this, 'foto_hierro', '${a.numero}')">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="card" style="padding:12px; border:1px solid #eee;">
+                            <h4 style="margin:0 0 10px 0; font-size:12px; color:var(--primary-dark); border-bottom:1px solid #eee; padding-bottom:5px;">INFORMACIÓN GENERAL</h4>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                <div class="form-group"><label style="font-size:10px;">Nombre</label><input type="text" id="ed_nombre" value="${a.nombre || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                                <div class="form-group"><label style="font-size:10px;">Raza</label><input type="text" id="ed_raza" value="${a.raza || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                                <div class="form-group"><label style="font-size:10px;">Lote</label><input type="text" id="ed_lote" value="${a.lote || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                                <div class="form-group"><label style="font-size:10px;">Tipo</label><input type="text" id="ed_tipo" value="${a.tipo || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                                <div class="form-group"><label style="font-size:10px;">Sexo</label>
+                                    <select id="ed_sexo" class="input-form" style="padding:6px; font-size:13px;">
+                                        <option value="Hembra" ${a.sexo === 'Hembra' || a.sexo === 'H' ? 'selected' : ''}>Hembra</option>
+                                        <option value="Macho" ${a.sexo === 'Macho' || a.sexo === 'M' ? 'selected' : ''}>Macho</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label style="font-size:10px;">Estatus Repro</label>
+                                    <input type="text" id="ed_estatus_repro" value="${a.estatus_repro || 'Vacía'}" class="input-form" style="padding:6px; font-size:13px;" list="list_estatus_repro">
+                                    <datalist id="list_estatus_repro">
+                                        <option value="Vacía">
+                                        <option value="Preñada">
+                                        <option value="En Lactancia">
+                                        <option value="Seca">
+                                        <option value="En Celo">
+                                    </datalist>
+                                </div>
+                                <div class="form-group"><label style="font-size:10px;">Estatus Vital</label>
+                                    <select id="ed_estatus" class="input-form" style="padding:6px; font-size:13px;">
+                                        <option ${a.estatus === 'Vivos' ? 'selected' : ''}>Vivos</option>
+                                        <option ${a.estatus === 'Muertos' ? 'selected' : ''}>Muertos</option>
+                                        <option ${a.estatus === 'Vendidos' ? 'selected' : ''}>Vendidos</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                    <div class="card" style="padding:12px; border:1px solid #eee;">
+                        <h4 style="margin:0 0 10px 0; font-size:12px; color:var(--primary-dark); border-bottom:1px solid #eee; padding-bottom:5px;">ORIGEN Y NACIMIENTO</h4>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div class="form-group"><label style="font-size:10px;">Fecha Nac.</label><input type="date" id="ed_fecha_nac" value="${a.fecha_nac || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                            <div class="form-group"><label style="font-size:10px;">Peso Nacer</label><input type="text" id="ed_peso_nacer" value="${a.peso_nacer || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                            <div class="form-group"><label style="font-size:10px;"># Madre</label><input type="text" id="ed_num_madre" value="${a.num_madre || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                            <div class="form-group"><label style="font-size:10px;">Nombre Madre</label><input type="text" id="ed_nom_madre" value="${a.nom_madre || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                            <div class="form-group"><label style="font-size:10px;">Padre</label><input type="text" id="ed_padre" value="${a.padre || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                            <div class="form-group"><label style="font-size:10px;">Propietario</label><input type="text" id="ed_propietario" value="${a.propietario || ''}" class="input-form" style="padding:6px; font-size:13px;"></div>
+                        </div>
+                    </div>
+                    <div class="card" style="padding:12px; border:1px solid #eee;">
+                        <h4 style="margin:0 0 10px 0; font-size:12px; color:var(--primary-dark); border-bottom:1px solid #eee; padding-bottom:5px;">EXTRAS</h4>
+                        <div class="form-group">
+                            <label style="font-size:10px;">Comentarios / Observaciones</label>
+                            <textarea id="ed_comentarios" class="input-form" style="height:88px; font-family:inherit; font-size:13px; padding:6px;">${a.comentarios || ''}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:30px;">
+                    <button id="btn_guardar_cambios_ficha" class="btn-new" onclick="guardarCambiosFicha('${a.numero}')" style="flex:2; justify-content:center; height:45px; background:var(--primary); font-size:14px;">
+                        <i class="fas fa-save"></i> GUARDAR CAMBIOS
+                    </button>
+                    <button class="btn-new" onclick="abrirModalRapido('parto', '${a.numero}', '${a.nombre}')" style="flex:1; justify-content:center; height:45px; background:var(--secondary); font-size:14px;">
+                        <i class="fas fa-baby-carriage"></i> + PARTO
+                    </button>
+                    <button class="btn-new" onclick="abrirModalRapido('leche', '${a.numero}', '${a.nombre}')" style="flex:1; justify-content:center; height:45px; background:var(--accent); font-size:14px;">
+                        <i class="fas fa-tint"></i> + PESAJE
+                    </button>
+                    <button class="btn-new" onclick="volverALista()" style="flex:1; justify-content:center; height:45px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:14px;">
+                        <i class="fas fa-arrow-left"></i> VOLVER
+                    </button>
+                </div>
+                
+                <!-- RESUMEN HISTÓRICO -->
+                <h3 style="margin-top:20px; border-bottom: 2px solid var(--primary); padding-bottom:5px; font-size:1.1rem;">
+                    <i class="fas fa-chart-pie"></i> Resumen de Vida Productiva
+                </h3>
+                <div class="stats-grid" style="margin-top:10px; grid-template-columns: repeat(4, 1fr); gap:10px;">
+                    <div class="stat-card" style="border-top: 3px solid var(--secondary); padding:10px;">
+                        <h4 style="font-size:1.2rem; margin:0;">${historialPartosLen}</h4>
+                        <p style="font-size:11px; margin:2px 0 0 0;">Partos</p>
+                    </div>
+                    <div class="stat-card" style="border-top: 3px solid var(--secondary); padding:10px;">
+                        <h4 style="font-size:1.2rem; margin:0;">${totalLitros.toFixed(1)} <small style="font-size:10px;">kg</small></h4>
+                        <p style="font-size:11px; margin:2px 0 0 0;">Total Leche</p>
+                    </div>
+                    <div class="stat-card" style="border-top: 3px solid var(--accent); padding:10px;">
+                        <h4 style="font-size:1.2rem; margin:0;">${promedio} <small style="font-size:10px;">kg</small></h4>
+                        <p style="font-size:11px; margin:2px 0 0 0;">Promedio</p>
+                    </div>
+                    <div class="stat-card" style="border-top: 3px solid var(--accent); padding:10px;">
+                        <h4 style="font-size:1.2rem; margin:0;">${pesadasValidas.length}</h4>
+                        <p style="font-size:11px; margin:2px 0 0 0;">Días Pesados</p>
+                    </div>
+                </div>
+
+                <div style="margin-top:30px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 style="margin:0; font-size:1.1rem;"><i class="fas fa-baby-carriage"></i> Historial de Partos</h3>
+                    </div>
+                    <div class="table-container" style="max-height:250px; overflow-y:auto;">
+                        <table style="font-size:12px;">
+                            <thead style="position:sticky; top:0; z-index:10;">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Cría</th>
+                                    <th>Estatus</th>
+                                    <th>Lactancia</th>
+                                    <th>Promedio</th>
+                                    <th>Intv. (P-P)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(pData.partos || []).map((p, idx) => {
+                                    const actual = new Date(p.fecha + 'T12:00:00');
+                                    let intStr = '-';
+                                    let lactanciaStr = '-';
+                                    let promLactStr = '-';
+
+                                    if (idx < pData.partos.length - 1) {
+                                        const anterior = new Date(pData.partos[idx + 1].fecha + 'T12:00:00');
+                                        intStr = Math.ceil(Math.abs(actual - anterior) / (1000 * 60 * 60 * 24)) + 'd';
+                                    }
+
+                                    let fechaFin = new Date();
+                                    if (idx > 0) {
+                                        fechaFin = new Date(pData.partos[idx - 1].fecha + 'T12:00:00');
+                                    }
+
+                                    const lecheLactancia = pesadasValidas.filter(l => {
+                                        const fl = new Date(l.fecha + 'T12:00:00');
+                                        return fl >= actual && fl < fechaFin;
+                                    }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+                                    if (lecheLactancia.length > 0) {
+                                        const prim = new Date(lecheLactancia[0].fecha + 'T12:00:00');
+                                        const ult = new Date(lecheLactancia[lecheLactancia.length - 1].fecha + 'T12:00:00');
+                                        lactanciaStr = (Math.ceil(Math.abs(ult - prim) / (1000 * 60 * 60 * 24)) + 1) + 'd';
+                                        const sumaLact = lecheLactancia.reduce((acc, obj) => acc + obj.kg, 0);
+                                        promLactStr = (sumaLact / lecheLactancia.length).toFixed(1) + ' kg';
+                                    }
+
+                                    return `<tr>
+                                        <td><b>${formatearFecha(p.fecha)}</b></td>
+                                        <td>#${p.num_asignado || '-'}<br><small>${p.sexo || 'N/A'}</small></td>
+                                        <td><span class="badge" style="font-size:10px; padding:2px 6px;">${p.estatus_cria || p.estado || '-'}</span></td>
+                                        <td>${lactanciaStr}</td>
+                                        <td><b>${promLactStr}</b></td>
+                                        <td>${intStr}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="margin-top:25px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 style="margin:0; font-size:1.1rem;"><i class="fas fa-tint"></i> Últimos Pesajes</h3>
+                    </div>
+                    <div class="table-container" style="max-height:200px; overflow-y:auto;">
+                        <table style="font-size:12px;">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Turno</th>
+                                    <th>Peso (kg)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(lData || []).slice(0, 10).map(l => `
+                                    <tr>
+                                        <td>${formatearFecha(l.fecha)}</td>
+                                        <td>${l.turno === 'M' ? 'Mañana' : 'Tarde'}</td>
+                                        <td style="font-weight:700; color:var(--primary);">${l.kg} kg</td>
+                                    </tr>
+                                `).join('')}
+                                ${lData && lData.length > 10 ? `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); font-size:11px;">Mostrando últimas 10 pesadas</td></tr>` : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            } catch (e) {
+                console.error("Error al renderizar ficha:", e);
+                alert("Ocurrió un error al cargar la ficha del animal.");
+            }
+        }
+
+        async function previsualizarYSubir(input, campo, num) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById(`prev_${campo}`).innerHTML = `<img src="${e.target.result}">`;
+            };
+            reader.readAsDataURL(file);
+            const fd = new FormData();
+            fd.append('foto', file);
+            const res = await fetch('/api/upload-foto', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                window[`last_${campo}`] = data.filename;
+            }
+        }
+
+        /* NUEVO: Recopila todos los datos del formulario y los envía al servidor */
+        async function guardarCambiosFicha(num) {
+            const btn = document.getElementById('btn_guardar_cambios_ficha');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO...'; }
+            try {
+                const data = {
+                    numero: num,
+                    nombre: document.getElementById('ed_nombre').value,
+                    fecha_nac: document.getElementById('ed_fecha_nac').value,
+                    sexo: document.getElementById('ed_sexo').value,
+                    raza: document.getElementById('ed_raza').value,
+                    lote: document.getElementById('ed_lote').value,
+                    tipo: document.getElementById('ed_tipo').value,
+                    estatus: document.getElementById('ed_estatus').value,
+                    propietario: document.getElementById('ed_propietario').value,
+                    num_madre: document.getElementById('ed_num_madre').value,
+                    nom_madre: document.getElementById('ed_nom_madre').value,
+                    padre: document.getElementById('ed_padre').value,
+                    peso_nacer: document.getElementById('ed_peso_nacer').value,
+                    comentarios: document.getElementById('ed_comentarios').value,
+                    estatus_repro: document.getElementById('ed_estatus_repro').value
+                };
+
+                if (window.last_foto_animal) data.foto_animal = window.last_foto_animal;
+                if (window.last_foto_hierro) data.foto_hierro = window.last_foto_hierro;
+
+                const res = await fetch('/api/registrar-animal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('Cambios guardados correctamente');
+                    window.last_foto_animal = null;
+                    window.last_foto_hierro = null;
+                    cargarDatosBasicos();
+                    listaAnimalesCompleta = [];
+                } else {
+                    alert('Error: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> GUARDAR CAMBIOS'; }
+            }
+        }
+
+        function volverALista() {
+            document.getElementById('f_detalle_area').style.display = 'none';
+            document.getElementById('f_buscar_area').style.display = 'block';
+        }
+
+        // ============================================
+        //  CONTROL LECHERO — PRE-CARGA CON BORRADOR
+        // ============================================
+        let lecheBorrador = [];            // Lista en memoria
+        let lecheAnimalSel = null;         // { numero, nombre }
+        let lecheTurnoActual = 'M';
+
+        async function lecheInicializar() {
+            // Fecha de hoy por defecto
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            document.getElementById('leche_fecha').value = `${yyyy}-${mm}-${dd}`;
+
+            // Intentar recuperar borrador del servidor
+            try {
+                const res = await fetch('/api/borrador-leche');
+                const data = await res.json();
+                if (data.success && data.data && Array.isArray(data.data.entradas) && data.data.entradas.length > 0) {
+                    lecheBorrador = data.data.entradas;
+                    if (data.data.fecha) document.getElementById('leche_fecha').value = data.data.fecha;
+                    if (data.data.turno) lecheSetTurno(data.data.turno);
+                    document.getElementById('leche_borrador_badge').style.display = 'block';
+                    lecheRenderLista();
+                }
+            } catch (e) { /* sin borrador */ }
+        }
+
+        function lecheSetTurno(t) {
+            lecheTurnoActual = t;
+            document.getElementById('leche_btn_m').classList.toggle('activo', t === 'M');
+            document.getElementById('leche_btn_t').classList.toggle('activo', t === 'T');
+            leche_guardarBorrador();
+        }
+
+        function leche_sugerir() {
+            const q = document.getElementById('leche_bus').value.toLowerCase().trim();
+            const box = document.getElementById('leche_sug');
+            if (q.length < 1) { box.style.display = 'none'; return; }
+            
+            // Filtro: Solo vacas vivas y en ordeño
+            const matches = listaAnimales.filter(a => {
+                const queryMatch = String(a.numero).toLowerCase().includes(q) || String(a.nombre).toLowerCase().includes(q);
+                
+                // Normalizado para comparación
+                const loteNorm = String(a.lote || '').toLowerCase().trim();
+                const estNorm = String(a.estatus || '').toLowerCase().trim();
+                
+                const enOrdeno = (loteNorm === 'ordeño' || loteNorm === 'ordeño' || loteNorm === 'b ordeño' || loteNorm === 'ordeño '); // Tolerancia a tildes y espacios
+                const viva = (estNorm === 'vivos' || estNorm === 'vivo');
+                
+                return queryMatch && (loteNorm === 'ordeño' || loteNorm === 'ordeño') && viva;
+            }).slice(0, 8);
+
+            if (matches.length === 0) { box.style.display = 'none'; return; }
+            box.innerHTML = matches.map(m =>
+                `<div class="suggestion-item" onclick="leche_selAnimal('${m.numero}', '${(m.nombre || '').replace(/'/g, '\\\'')}')">${m.nombre || '—'} <span style="color:#94a3b8;">#${m.numero}</span></div>`
+            ).join('');
+            box.style.display = 'block';
+        }
+
+        function leche_cerrarSug() {
+            document.getElementById('leche_sug').style.display = 'none';
+        }
+
+        function leche_selAnimal(num, nom) {
+            lecheAnimalSel = { numero: num, nombre: nom };
+            document.getElementById('leche_bus').value = `${nom} (#${num})`;
+            leche_cerrarSug();
+            // Mostrar info y mover foco al campo de peso
+            document.getElementById('leche_sel_nom').innerText = `${nom} — #${num}`;
+            document.getElementById('leche_sel_info').style.display = 'block';
+            const kgInput = document.getElementById('leche_kg');
+            kgInput.value = '';
+            kgInput.focus();
+        }
+
+        function lecheAgregarEntrada() {
+            if (!lecheAnimalSel) {
+                document.getElementById('leche_bus').focus();
+                return alert('Primero selecciona una vaca del buscador.');
+            }
+            const kgStr = document.getElementById('leche_kg').value;
+            const kg = parseFloat(kgStr);
+            if (isNaN(kg) || kg <= 0) {
+                return alert('Ingresa un peso válido mayor a 0.');
+            }
+
+            const btn = document.querySelector('#sec_leche button.btn-new');
+            if (btn) btn.disabled = true;
+
+            // Agregar a la lista
+            lecheBorrador.push({ numero: lecheAnimalSel.numero, nombre: lecheAnimalSel.nombre, kg });
+            leche_guardarBorrador();
+            lecheRenderLista();
+
+            // Limpiar para el siguiente animal
+            document.getElementById('leche_kg').value = '';
+            document.getElementById('leche_bus').value = '';
+            document.getElementById('leche_sel_info').style.display = 'none';
+            lecheAnimalSel = null;
+            document.getElementById('leche_bus').focus();
+            if (btn) btn.disabled = false;
+        }
+
+        function lecheRenderLista() {
+            const tbody = document.getElementById('leche_lista_body');
+            const emptyRow = document.getElementById('leche_empty_row');
+            const totalKg = lecheBorrador.reduce((s, e) => s + e.kg, 0);
+
+            document.getElementById('leche_contador').textContent = `${lecheBorrador.length} ${lecheBorrador.length === 1 ? 'vaca' : 'vacas'}`;
+            document.getElementById('leche_total_kg').textContent = `Total: ${totalKg.toFixed(1)} kg`;
+
+            const confirmBtn = document.getElementById('leche_btn_confirmar');
+            confirmBtn.disabled = lecheBorrador.length === 0;
+
+            if (lecheBorrador.length === 0) {
+                tbody.innerHTML = '<tr id="leche_empty_row"><td colspan="4" style="text-align:center; color:var(--text-muted); padding:25px; font-style:italic;">Aún no hay entradas. Empieza a agregar vacas ↑</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lecheBorrador.map((e, i) => `
+                <tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
+                    <td style="font-weight:bold; color:var(--primary-dark);">${e.numero}</td>
+                    <td>${e.nombre || '—'}</td>
+                    <td style="text-align:center; font-weight:bold; color:var(--secondary);">${e.kg.toFixed(1)}</td>
+                    <td style="text-align:center;">
+                        <i class="fas fa-times" onclick="lecheQuitarEntrada(${i})" style="color:var(--danger); cursor:pointer; font-size:16px;"></i>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function lecheQuitarEntrada(i) {
+            lecheBorrador.splice(i, 1);
+            leche_guardarBorrador();
+            lecheRenderLista();
+        }
+
+        async function leche_guardarBorrador() {
+            const fecha = document.getElementById('leche_fecha').value;
+            try {
+                await fetch('/api/borrador-leche', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fecha, turno: lecheTurnoActual, entradas: lecheBorrador })
+                });
+            } catch (e) { /* silencioso */ }
+        }
+
+        async function lecheConfirmar() {
+            if (lecheBorrador.length === 0) return;
+            const fecha = document.getElementById('leche_fecha').value;
+            if (!fecha) return alert('Selecciona la fecha del ordeño.');
+
+            if (!confirm(`¿Confirmar y grabar ${lecheBorrador.length} pesadas del ${lecheTurnoActual === 'M' ? 'MAÑANA' : 'TARDE'} (${fecha}) en la base de datos?`)) return;
+
+            const btn = document.getElementById('leche_btn_confirmar');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GRABANDO...';
+            try {
+                const res = await fetch('/api/confirmar-leche', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fecha,
+                        turno: lecheTurnoActual,
+                        entradas: lecheBorrador,
+                        creado_por: currentUser?.user || 'sistema'
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✅ ${data.total} pesadas grabadas correctamente en la BD.`);
+                    lecheBorrador = [];
+                    lecheRenderLista();
+                    document.getElementById('leche_borrador_badge').style.display = 'none';
+                    cargarDashboard();
+                } else {
+                    alert('Error al grabar: ' + (data.error || 'desconocido'));
+                }
+            } catch (e) {
+                alert('Error de conexión: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-double"></i> GRABAR EN BD';
+            }
+        }
+
+        function lecheLimpiar() {
+            if (lecheBorrador.length > 0 && !confirm('¿Seguro que deseas descartar la lista actual?')) return;
+            lecheBorrador = [];
+            lecheAnimalSel = null;
+            lecheRenderLista();
+            document.getElementById('leche_borrador_badge').style.display = 'none';
+            document.getElementById('leche_bus').value = '';
+            document.getElementById('leche_kg').value = '';
+            document.getElementById('leche_sel_info').style.display = 'none';
+            fetch('/api/borrador-leche', { method: 'DELETE' }).catch(() => { });
+        }
+
+        // Compatibilidad: funciones antiguas redirigen a las nuevas
+        function sugerir(tipo, ctx) { if (ctx === 'l') leche_sugerir(); }
+        function selAnimalLeche(num, nom) { leche_selAnimal(num, nom); }
+        function setOrdeño(o) { lecheSetTurno(o); }
+
+        // ============================================
+        //  MÓDULO PARTOS
+        // ============================================
+        let partosAnimalSel = null; // { numero, nombre }
+
+        function partos_inicializar() {
+            // Fecha de hoy por defecto
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            document.getElementById('p_fecha').value = `${yyyy}-${mm}-${dd}`;
+            partos_cargarLista();
+        }
+
+        function partos_sugerir() {
+            const q = document.getElementById('p_bus_madre').value.toLowerCase().trim();
+            const box = document.getElementById('p_sug_madre');
+            if (q.length < 1) { box.style.display = 'none'; return; }
+            const matches = listaAnimales.filter(a =>
+                String(a.numero).toLowerCase().includes(q) || String(a.nombre).toLowerCase().includes(q)
+            ).slice(0, 8);
+            if (matches.length === 0) { box.style.display = 'none'; return; }
+            box.innerHTML = matches.map(m =>
+                `<div class="suggestion-item" onclick="partos_selMadre('${m.numero}', '${(m.nombre || '').replace(/'/g, '\\\'')}')">${m.nombre || '—'} <span style="color:#94a3b8;">#${m.numero}</span></div>`
+            ).join('');
+            box.style.display = 'block';
+        }
+
+        function partos_selMadre(num, nom) {
+            partosAnimalSel = { numero: num, nombre: nom };
+            document.getElementById('p_bus_madre').value = `${nom} (#${num})`;
+            document.getElementById('p_num_madre').value = num;
+            document.getElementById('p_sug_madre').style.display = 'none';
+            // Actualizar nombre sugerido de la cría automáticamente
+            partos_actualizarNombreCria();
+        }
+
+        function partos_actualizarNombreCria() {
+            const sexo = document.getElementById('p_sexo').value;
+            const nomMadre = partosAnimalSel ? partosAnimalSel.nombre : '';
+            if (!nomMadre) return;
+            const prefijo = sexo === 'Hembra' ? 'H' : 'M';
+            document.getElementById('p_nombre_cria').value = `${prefijo} de ${nomMadre}`;
+        }
+
+        // Actualizar nombre si cambia el sexo
+        document.addEventListener('DOMContentLoaded', () => {
+            const sexoEl = document.getElementById('p_sexo');
+            if (sexoEl) sexoEl.addEventListener('change', partos_actualizarNombreCria);
+        });
+
+        function partos_toggleEstado() {
+            const estado = document.getElementById('p_estado').value;
+            document.getElementById('p_seccion_num').style.display = estado === 'Vivo' ? 'block' : 'none';
+        }
+
+        async function partos_generarNumero() {
+            const anio = String(new Date().getFullYear()).slice(-2);
+            try {
+                const res = await fetch(`/api/proximo-numero?anio=${anio}`);
+                const data = await res.json();
+                document.getElementById('p_num_asignado').value = data.proximo_numero;
+                partos_actualizarNombreCria();
+            } catch (e) {
+                alert('No se pudo generar el número: ' + e.message);
+            }
+        }
+
+        async function partos_registrar() {
+            const estado = document.getElementById('p_estado').value;
+            const tipoEvento = document.getElementById('p_tipo_evento').value;
+            const fecha = document.getElementById('p_fecha').value;
+
+            if (!partosAnimalSel) return alert('Selecciona la madre del buscador.');
+            if (!fecha) return alert('Indica la fecha del parto.');
+
+            const estadoFinal = tipoEvento === 'Aborto' ? 'Muerto' : estado;
+
+            const numAsignado = document.getElementById('p_num_asignado').value.trim();
+            if (estadoFinal === 'Vivo' && !numAsignado) {
+                return alert('Indica el número a asignar a la cría viva. Puedes usar el botón "Generar".');
+            }
+
+            const btn = document.getElementById('btn_registrar_parto');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO...';
+            try {
+
+                const body = {
+                    fecha,
+                    num_madre: partosAnimalSel.numero,
+                    nom_madre: partosAnimalSel.nombre,
+                    num_asignado: numAsignado,
+                    sexo_cria: document.getElementById('p_sexo').value,
+                    padre: document.getElementById('p_padre').value.trim(),
+                    peso: document.getElementById('p_peso').value || 0,
+                    estado: estadoFinal,
+                    estatus_cria: tipoEvento,
+                    observacion: `[${tipoEvento}] ` + document.getElementById('p_observacion').value,
+                    creado_por: currentUser?.user || 'sistema'
+                };
+
+                const res = await fetch('/api/registrar-parto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    let msg = `✅ Parto registrado correctamente.`;
+                    if (data.ficha_creada) msg += `\n🐄 Ficha creada para la cría #${numAsignado}`;
+                    alert(msg);
+                    partosAnimalSel = null;
+                    document.getElementById('p_bus_madre').value = '';
+                    document.getElementById('p_num_madre').value = '';
+                    document.getElementById('p_num_asignado').value = '';
+                    document.getElementById('p_nombre_cria').value = '';
+                    document.getElementById('p_padre').value = '';
+                    document.getElementById('p_peso').value = '';
+                    document.getElementById('p_observacion').value = '';
+                    document.getElementById('p_estado').value = 'Vivo';
+                    document.getElementById('p_tipo_evento').value = 'Parto';
+                    document.getElementById('p_seccion_num').style.display = 'block';
+                    partos_inicializar();
+                } else {
+                    alert('Error: ' + (data.error || 'desconocido'));
+                }
+            } catch (e) {
+                alert('Error de conexión: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> REGISTRAR PARTO';
+            }
+        }
+
+        async function partos_cargarLista() {
+            const tbody = document.getElementById('partos_lista_body');
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:15px; color:var(--text-muted);">Cargando...</td></tr>';
+            try {
+                const res = await fetch('/api/tablas/partos');
+                const json = await res.json();
+                const partos = (json.data || []).slice(0, 50);
+                if (partos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">Sin partos registrados aún.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = partos.map(p => {
+                    const estadoColor = p.estado === 'Vivo' ? '#16a34a' : '#dc2626';
+                    return `<tr>
+                        <td>${formatearFecha(p.fecha)}</td>
+                        <td>${p.nom_madre || '—'}</td>
+                        <td style="font-weight:bold;">${p.num_madre || '—'}</td>
+                        <td>${p.sexo || '—'}</td>
+                        <td style="font-weight:bold; color:${estadoColor};">${p.estado || '—'}</td>
+                        <td>${p.num_asignado ? `<b>${p.num_asignado}</b>` : '—'}</td>
+                        <td style="text-align:center;">${p.peso ? p.peso + ' kg' : '—'}</td>
+                        <td style="font-size:11px; color:var(--text-muted);">${p.observacion || '—'}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" style="color:var(--danger); padding:15px;">Error al cargar.</td></tr>';
+            }
+        }
+
+        // ============================================
+        //  MÓDULO BAJAS
+        // ============================================
+        let bajasAnimalSel = null;
+
+        function bajas_inicializar() {
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            document.getElementById('b_fecha').value = `${yyyy}-${mm}-${dd}`;
+            bajas_toggleCampos();
+            bajas_cargarLista();
+        }
+
+        function bajas_sugerir() {
+            const q = document.getElementById('b_bus').value.toLowerCase().trim();
+            const box = document.getElementById('b_sug');
+            if (q.length < 1) { box.style.display = 'none'; return; }
+            const matches = listaAnimales.filter(a =>
+                String(a.numero).toLowerCase().includes(q) || String(a.nombre).toLowerCase().includes(q)
+            ).slice(0, 8);
+            if (matches.length === 0) { box.style.display = 'none'; return; }
+            box.innerHTML = matches.map(m =>
+                `<div class="suggestion-item" onclick="bajas_selAnimal('${m.numero}', '${(m.nombre || '').replace(/'/g, '\\\'')}')">${m.nombre || '—'} <span style="color:#94a3b8;">#${m.numero}</span></div>`
+            ).join('');
+            box.style.display = 'block';
+        }
+
+        function bajas_selAnimal(num, nom) {
+            bajasAnimalSel = { numero: num, nombre: nom };
+            document.getElementById('b_bus').value = `${nom} (#${num})`;
+            document.getElementById('b_num').value = num;
+            document.getElementById('b_sug').style.display = 'none';
+        }
+
+        function bajas_toggleCampos() {
+            const tipo = document.getElementById('b_tipo').value;
+            document.getElementById('b_sec_muerte').style.display = tipo === 'Muerte' ? 'block' : 'none';
+            document.getElementById('b_sec_venta').style.display = tipo === 'Venta' ? 'block' : 'none';
+            document.getElementById('b_sec_sacrificio').style.display = tipo === 'Sacrificio' ? 'block' : 'none';
+        }
+
+        // Calcular precio/kg en tiempo real
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'b_precio' || e.target.id === 'b_peso_venta') {
+                const precio = parseFloat(document.getElementById('b_precio')?.value) || 0;
+                const peso = parseFloat(document.getElementById('b_peso_venta')?.value) || 0;
+                const span = document.getElementById('b_precio_kg');
+                if (span) span.textContent = (peso > 0 && precio > 0) ? `$${(precio / peso).toFixed(2)} / kg` : '—';
+            }
+        });
+
+        async function bajas_registrar() {
+            if (!bajasAnimalSel) return alert('Selecciona el animal del buscador.');
+            const fecha = document.getElementById('b_fecha').value;
+            if (!fecha) return alert('Indica la fecha de la baja.');
+            const tipo = document.getElementById('b_tipo').value;
+            if (!confirm(`¿Registrar baja de #${bajasAnimalSel.numero} ${bajasAnimalSel.nombre} por ${tipo}? El estatus del animal se actualizará automáticamente.`)) return;
+
+            const btn = document.getElementById('btn_registrar_baja');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO...';
+            try {
+                let causa = '';
+                if (tipo === 'Muerte') causa = document.getElementById('b_causa').value;
+                if (tipo === 'Sacrificio') causa = document.getElementById('b_motivo_sacrificio').value;
+
+                const body = {
+                    fecha,
+                    numero_animal: bajasAnimalSel.numero,
+                    nombre_animal: bajasAnimalSel.nombre,
+                    tipo_baja: tipo,
+                    causa,
+                    comprador: document.getElementById('b_comprador')?.value || '',
+                    precio_total: document.getElementById('b_precio')?.value || 0,
+                    peso_venta: document.getElementById('b_peso_venta')?.value || 0,
+                    guia_movilizacion: document.getElementById('b_guia')?.value || '',
+                    tiene_seguro: document.getElementById('b_seguro')?.value || 'No',
+                    observaciones: document.getElementById('b_obs').value,
+                    creado_por: currentUser?.user || 'sistema'
+                };
+
+                const res = await fetch('/api/registrar-baja', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✅ Baja registrada. Animal marcado como: ${data.nuevo_estatus}`);
+                    bajasAnimalSel = null;
+                    document.getElementById('b_bus').value = '';
+                    document.getElementById('b_num').value = '';
+                    document.getElementById('b_obs').value = '';
+                    if (document.getElementById('b_comprador')) document.getElementById('b_comprador').value = '';
+                    if (document.getElementById('b_precio')) document.getElementById('b_precio').value = '';
+                    if (document.getElementById('b_peso_venta')) document.getElementById('b_peso_venta').value = '';
+                    if (document.getElementById('b_guia')) document.getElementById('b_guia').value = '';
+                    bajas_cargarLista();
+                    cargarDatosBasicos();
+                    listaAnimalesCompleta = [];
+                } else {
+                    alert('Error: ' + (data.error || 'desconocido'));
+                }
+            } catch (e) {
+                alert('Error de conexión: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> REGISTRAR BAJA';
+            }
+        }
+
+        async function bajas_cargarLista() {
+            const tbody = document.getElementById('bajas_lista_body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:15px; color:var(--text-muted);">Cargando...</td></tr>';
+            try {
+                const res = await fetch('/api/bajas');
+                const json = await res.json();
+                const list = json.data || [];
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted); font-style:italic;">Sin bajas registradas aún.</td></tr>';
+                    return;
+                }
+                const TIPO_COLOR = {
+                    'Muerte': '#dc2626', 'Venta': '#16a34a', 'Robo': '#7c3aed',
+                    'Sacrificio': '#ca8a04', 'Transferencia': '#0369a1', 'Descarte': '#6b7280'
+                };
+                tbody.innerHTML = list.map(b => {
+                    const color = TIPO_COLOR[b.tipo_baja] || '#374151';
+                    const causaOcomprador = b.causa || b.comprador || '—';
+                    return `<tr>
+                        <td>${formatearFecha(b.fecha)}</td>
+                        <td>${b.nombre_animal || '—'}</td>
+                        <td style="font-weight:bold;">${b.numero_animal || '—'}</td>
+                        <td style="font-weight:bold; color:${color};">${b.tipo_baja || '—'}</td>
+                        <td>${causaOcomprador}</td>
+                        <td style="text-align:center;">${b.peso_venta > 0 ? b.peso_venta + ' kg' : '—'}</td>
+                        <td style="font-size:11px; color:var(--text-muted);">${b.observaciones || '—'}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" style="color:var(--danger); padding:15px;">Error al cargar.</td></tr>';
+            }
+        }
+
+        // QUESO (REDESIGN: Manual + EXIF)
+        let lastOcrPhoto = null;
+        async function procesarFotoQueso(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                // 1. Vista previa e indicador
+                document.getElementById('q_preview_img').src = URL.createObjectURL(file);
+                document.getElementById('q_prev_box').style.display = 'block';
+                document.getElementById('q_photo_info').innerText = "Subiendo y analizando foto...";
+
+                // 2. EXIF (Fecha)
+                const exif = await exifr.parse(file);
+                if (exif && exif.DateTimeOriginal) {
+                    const d = new Date(exif.DateTimeOriginal);
+                    const formattedDate = d.toISOString().split('T')[0];
+                    document.getElementById('q_fecha').value = formattedDate;
+                    document.getElementById('q_photo_info').innerHTML = `<i class="fas fa-check-circle"></i> Fecha detectada: <b>${formattedDate}</b>`;
+                } else {
+                    const hoy = new Date().toISOString().split('T')[0];
+                    document.getElementById('q_fecha').value = hoy;
+                    document.getElementById('q_photo_info').innerHTML = `<i class="fas fa-exclamation-triangle"></i> No hay fecha en metadatos (usando hoy: ${hoy})`;
+                }
+
+                // 3. Subida
+                const fd = new FormData(); fd.append('foto', file);
+                const res = await fetch('/api/upload-foto', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    lastOcrPhoto = data.filename;
+                }
+            } catch (err) {
+                console.error("Error photo:", err);
+                alert("Error al procesar la foto.");
+            }
+        }
+
+        async function registrarQueso() {
+            try {
+                const fecha = document.getElementById('q_fecha').value;
+                const peso = document.getElementById('q_peso').value;
+                const leche = document.getElementById('q_leche').value;
+                const equipo = document.getElementById('q_turno').value;
+                
+                if (!fecha) return alert('Sube la foto primero para obtener la fecha');
+                if (!peso) return alert('Ingresa el peso medido');
+                
+                const btn = document.querySelector('#sec_queso .btn-new');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO...';
+                btn.disabled = true;
+
+                const res = await fetch('/api/registrar-queso', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fecha: fecha,
+                        equipo: equipo,
+                        peso_kg: peso, 
+                        leche_usada_litros: leche,
+                        foto_path: lastOcrPhoto,
+                        creado_por: currentUser.user
+                    })
+                });
+                
+                const data = await res.json();
+                if (res.ok) { 
+                    alert('✅ Producción guardada con éxito.'); 
+                    lastOcrPhoto = null; 
+                    location.reload(); 
+                } else {
+                    alert('❌ Error: ' + (data.error || 'No se pudo guardar'));
+                }
+            } catch (e) {
+                alert('❌ Error de conexión: ' + e.message);
+            } finally {
+                const btn = document.querySelector('#sec_queso .btn-new');
+                if (btn) { btn.innerHTML = 'REGISTRAR PRODUCCIÓN'; btn.disabled = false; }
+            }
+        }
+
+        function verFoto(path) {
+            if (!path || path === 'null') return alert('No hay foto para este registro');
+            document.getElementById('img_ver_foto').src = `/uploads/${path}`;
+            document.getElementById('modal_ver_foto').style.display = 'flex';
+        }
+
+        // ADMIN (EXCEL FILTER SYSTEM)
+        let adminConfig = null;
+        let activeFilters = {}; // { colName: [valores seleccionados] }
+        let currentFilterCol = null;
+
+        async function cargarTablaAdmin(tabla) {
+            try {
+                const resConf = await fetch('/api/admin-config');
+                if (resConf.ok) {
+                    adminConfig = await resConf.json();
+                } else {
+                    adminConfig = adminConfig || {};
+                }
+            } catch (e) {
+                adminConfig = adminConfig || {};
+            }
+
+            pendingChanges = {};
+            activeFilters = {}; // Resetear filtros
+
+            // Por petición: Estatus 'Vivos' por defecto para la tabla de animales
+            if (tabla === 'animales') {
+                activeFilters['estatus'] = ['Vivos'];
+            }
+
+            document.getElementById('admin_save_bar').style.display = 'none';
+            document.getElementById('admin_sort_box').style.display = (tabla === 'animales') ? 'flex' : 'none';
+            let url = `/api/tablas/${tabla}?estatus=Todos`;
+
+            if (tabla === 'animales') {
+                const col = document.getElementById('admin_sort_col').value;
+                url += `&col=${col}`;
+            }
+
+
+            const res = await fetch(url);
+            const { data } = await res.json();
+            if (!data || data.length === 0) {
+                document.getElementById('admin_body').innerHTML = '<tr><td colspan="100" style="text-align:center; padding:20px;">No hay datos</td></tr>';
+                return;
+            }
+
+            window.adminDataRaw = data; // Guardar original para filtros
+            const allCols = Object.keys(data[0]);
+            let visibleCols = adminConfig[tabla] ? adminConfig[tabla].visible : allCols;
+            if (!visibleCols) visibleCols = allCols;
+
+            window.adminVisibleCols = visibleCols;
+
+            // Generar Encabezados con iconos de filtro (excepto para nombres y números)
+            document.getElementById('admin_th').innerHTML = `
+                <tr>
+                    <th>Acción</th>
+                    ${visibleCols.map(c => {
+                        const lowCol = c.toLowerCase();
+                        // Marcar el icono si hay un filtro activo para esta columna
+                        const isActive = (activeFilters[c] && activeFilters[c].length > 0 && activeFilters[c].length !== [...new Set(window.adminDataRaw.map(r => String(r[c] || '(Vacío)')))].length) ? 'active' : '';
+                        return `
+                        <th onclick="toggleFiltro(event, '${c}')">
+                            ${c} 
+                            <i class="fas fa-caret-down filter-icon ${isActive}" id="filter_icon_${c}"></i>
+                        </th>`;
+                    }).join('')}
+                </tr>`;
+
+            ejecutarFiltroFinal();
+        }
+
+        function renderAdminRows(data, visibleCols, tabla) {
+            document.getElementById('admin_body').innerHTML = data.map(row => {
+                const pkValue = (tabla === 'animales') ? row.numero : row.id;
+                const cells = visibleCols.map(c => {
+                    let val = row[c] || '';
+                    let displayVal = val;
+                    let extraHint = '';
+
+                    if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+                        const d = val.split(' ')[0].split('-');
+                        displayVal = `${d[2]}-${d[1]}-${d[0]}`;
+                    }
+
+                    const lowCol = c.toLowerCase();
+                    if (tabla === 'animales' && lowCol === 'tipo') {
+                        const sug = sugerirCategoria(row, null, null);
+                        if (sug && sug.toLowerCase().trim() !== String(val).toLowerCase().trim()) {
+                            extraHint = ` <span title="Sugerencia SISGAN: ${sug}" style="cursor:help;">💡</span>`;
+                        }
+                    }
+
+                    if (val === '...') displayVal = '';
+                    const cellId = `cell_${tabla}_${pkValue}_${c}`;
+                    return `<td id="${cellId}" style="white-space:nowrap;">
+                        <span contenteditable="true" oninput="marcarModificado('${cellId}')" onblur="editarCelda('${tabla}', '${pkValue}', '${c}', this.innerText)">${displayVal}</span>${extraHint}
+                    </td>`;
+                }).join('');
+
+                const btnFoto = (row.foto_path) ? `<i class="fas fa-camera" style="color:var(--secondary); cursor:pointer;" title="Ver Foto" onclick="verFoto('${row.foto_path}')"></i>` : '';
+
+                return `<tr>
+                <td style="text-align:center; display:flex; gap:8px; justify-content:center;">
+                    ${btnFoto}
+                    ${row.numero ? `<i class="fas fa-eye" style="color:var(--secondary); cursor:pointer;" onclick="verFicha('${row.numero}')" title="Ver Ficha"></i>` : ''}
+                    <i class="fas fa-check" style="color:var(--primary); cursor:pointer;" onclick="confirmarFila('${tabla}', '${pkValue}')" title="Confirmar/Guardar"></i>
+                    <i class="fas fa-trash-alt" style="color:var(--danger); cursor:pointer;" onclick="borrarFilaAdmin('${tabla}', '${pkValue}')" title="Eliminar"></i>
+                </td>
+                ${cells}
+                </tr>`;
+            }).join('');
+        }
+
+        // LÓGICA DE FILTROS EXCEL
+        function toggleFiltro(event, col) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('admin_filter_dropdown');
+
+            if (currentFilterCol === col && dropdown.style.display === 'flex') {
+                return cerrarFiltroColumna();
+            }
+
+            currentFilterCol = col;
+
+            // Obtener valores únicos de los datos originales
+            const uniqueVals = [...new Set(window.adminDataRaw.map(r => String(r[col] || '(Vacío)')))].sort();
+
+            const list = document.getElementById('admin_filter_list');
+            list.innerHTML = `
+                <div style="padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+                    <div class="admin-filter-item" onclick="ordenarLocal('asc')" style="padding:8px; border-radius:4px;">
+                        <i class="fas fa-sort-alpha-down"></i> Ordenar de A a Z
+                    </div>
+                    <div class="admin-filter-item" onclick="ordenarLocal('desc')" style="padding:8px; border-radius:4px;">
+                        <i class="fas fa-sort-alpha-up"></i> Ordenar de Z a A
+                    </div>
+                </div>
+                <label class="admin-filter-item">
+                    <input type="checkbox" id="filter_select_all" onchange="seleccionarTodosFiltro(this.checked)" ${(!activeFilters[col] || activeFilters[col].length === uniqueVals.length) ? 'checked' : ''}>
+                    <span>(Seleccionar todo)</span>
+                </label>
+                ${uniqueVals.map(v => {
+                const isChecked = !activeFilters[col] || activeFilters[col].includes(v);
+                return `
+                    <label class="admin-filter-item val-item">
+                        <input type="checkbox" value="${v}" ${isChecked ? 'checked' : ''}>
+                        <span>${v}</span>
+                    </label>`;
+            }).join('')}
+            `;
+
+            // Posicionar el menú
+            const rect = event.currentTarget.getBoundingClientRect();
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+            dropdown.style.display = 'flex';
+        }
+
+        function seleccionarTodosFiltro(checked) {
+            document.querySelectorAll('#admin_filter_list input').forEach(i => i.checked = checked);
+        }
+
+        function filtrarListaValoresUnicos(txt) {
+            const query = txt.toLowerCase();
+            document.querySelectorAll('.val-item').forEach(el => {
+                const val = el.innerText.toLowerCase();
+                el.style.display = val.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function cerrarFiltroColumna() {
+            document.getElementById('admin_filter_dropdown').style.display = 'none';
+        }
+
+        function aplicarFiltroColumna() {
+            const checks = document.querySelectorAll('#admin_filter_list .val-item input:checked');
+            const selected = Array.from(checks).map(c => c.value);
+
+            activeFilters[currentFilterCol] = selected;
+
+            // Marcar icono como activo
+            const icon = document.getElementById(`filter_icon_${currentFilterCol}`);
+            icon.classList.toggle('active', selected.length < document.querySelectorAll('#admin_filter_list .val-item input').length);
+
+            ejecutarFiltroFinal();
+            cerrarFiltroColumna();
+        }
+
+        function ejecutarFiltroFinal() {
+            let data = [...window.adminDataRaw];
+            const filterCols = Object.keys(activeFilters);
+
+            const filtered = data.filter(row => {
+                return filterCols.every(col => {
+                    const cellVal = String(row[col] || '(Vacío)');
+                    return activeFilters[col].includes(cellVal);
+                });
+            });
+
+            renderAdminRows(filtered, window.adminVisibleCols, document.getElementById('admin_tablas').value);
+        }
+
+        function ordenarLocal(sentido) {
+            const tabla = document.getElementById('admin_tablas').value;
+            window.adminDataRaw.sort((a, b) => {
+                let valA = String(a[currentFilterCol] || '').toLowerCase();
+                let valB = String(b[currentFilterCol] || '').toLowerCase();
+
+                // Intento de orden numérico si aplica
+                if (!isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '') {
+                    return sentido === 'asc' ? valA - valB : valB - valA;
+                }
+
+                if (valA < valB) return sentido === 'asc' ? -1 : 1;
+                if (valA > valB) return sentido === 'asc' ? 1 : -1;
+                return 0;
+            });
+            ejecutarFiltroFinal();
+            cerrarFiltroColumna();
+        }
+
+        // Cerrar al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.admin-filter-dropdown') && !e.target.closest('th')) {
+                cerrarFiltroColumna();
+            }
+        });
+
+        async function abrirConfigAdmin() {
+            const tabla = document.getElementById('admin_tablas').value;
+            const res = await fetch(`/api/tablas/${tabla}?limit=1`); // Solo para obtener nombres de columnas
+            const { data } = await res.json();
+            if (!data || data.length === 0) return alert('No hay datos para configurar');
+
+            const allCols = Object.keys(data[0]);
+            const config = adminConfig[tabla] || { visible: allCols };
+
+            const list = document.getElementById('admin_config_list');
+            list.innerHTML = allCols.map(c => `
+                <label style="display:flex; align-items:center; gap:10px; padding:10px; background:#f8fafc; border-radius:6px; cursor:pointer;">
+                    <input type="checkbox" value="${c}" ${config.visible.includes(c) ? 'checked' : ''} style="width:18px; height:18px;">
+                    <span style="font-weight:600; font-size:14px;">${c}</span>
+                </label>
+            `).join('');
+
+            document.getElementById('modal_admin_config').style.display = 'flex';
+        }
+
+        function cerrarConfigAdmin() {
+            document.getElementById('modal_admin_config').style.display = 'none';
+        }
+
+        async function guardarConfigAdmin() {
+            const tabla = document.getElementById('admin_tablas').value;
+            const checks = document.querySelectorAll('#admin_config_list input[type="checkbox"]');
+            const visible = [];
+            checks.forEach(c => { if (c.checked) visible.push(c.value); });
+
+            if (visible.length === 0) return alert('Debe seleccionar al menos una columna');
+
+            adminConfig[tabla] = { visible, order: visible };
+
+            const res = await fetch('/api/admin-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(adminConfig)
+            });
+
+            if (res.ok) {
+                cerrarConfigAdmin();
+                cargarTablaAdmin(tabla);
+            }
+        }
+
+        function marcarModificado(cellId) {
+            const el = document.getElementById(cellId);
+            el.style.color = '#f59e0b'; // Naranja (Amber)
+            el.style.fontWeight = '700';
+            document.getElementById('admin_save_bar').style.display = 'flex';
+        }
+
+        function editarCelda(tabla, id, col, val) {
+            let valorFinal = val;
+            const cLow = col.toLowerCase();
+            if (cLow.includes('fecha') || cLow.includes('nacimiento') || cLow === 'fecha_nac') {
+                valorFinal = normalizarFechaISO(val);
+            }
+            const key = `${tabla}|${id}|${col}`;
+            pendingChanges[key] = valorFinal;
+        }
+
+        async function confirmarFila(tabla, id) {
+            // Filtrar cambios pendientes que correspondan a esta tabla e ID
+            const keys = Object.keys(pendingChanges).filter(k => k.startsWith(`${tabla}|${id}|`));
+
+            if (keys.length === 0) {
+                return alert('No hay cambios pendientes confirmados para esta fila.');
+            }
+
+            try {
+                for (const key of keys) {
+                    const [_, __, columna] = key.split('|');
+                    const valor = pendingChanges[key];
+                    await fetch('/api/save-cell', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tabla, id, columna, valor })
+                    });
+                    delete pendingChanges[key];
+                }
+
+                if (Object.keys(pendingChanges).length === 0) {
+                    document.getElementById('admin_save_bar').style.display = 'none';
+                }
+                alert('¡Datos de la fila guardados!');
+                if (document.getElementById('sec_admin').classList.contains('activa')) {
+                    cargarTablaAdmin(tabla);
+                } else if (document.getElementById('sec_partos').classList.contains('activa')) {
+                    cargarListaSimple('partos');
+                }
+            } catch (e) {
+                alert('Error al guardar: ' + e.message);
+            }
+        }
+
+        async function guardarCambiosLote() {
+            const keys = Object.keys(pendingChanges);
+            if (keys.length === 0) return;
+
+            const btn = event.target;
+            btn.innerText = 'GUARDANDO...';
+            btn.disabled = true;
+
+            try {
+                for (const key of keys) {
+                    const [tabla, id, columna] = key.split('|');
+                    const valor = pendingChanges[key];
+
+                    // VALIDACIÓN: No permitir blanco en numero o nombre para animales
+                    if (tabla === 'animales') {
+                        if ((columna === 'numero' || columna === 'nombre') && (!valor || valor.trim() === "" || valor === "...")) {
+                            alert(`Error: El campo "${columna}" no puede estar vacío.`);
+                            return;
+                        }
+                    }
+
+                    await fetch('/api/save-cell', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tabla, id, columna, valor })
+                    });
+                }
+                alert('¡Todos los cambios se han guardado con éxito!');
+                cargarTablaAdmin(document.getElementById('admin_tablas').value);
+            } catch (e) {
+                alert('Error al guardar algunos cambios');
+                console.error(e);
+            } finally {
+                btn.innerText = 'GUARDAR TODO';
+                btn.disabled = false;
+            }
+        }
+
+        async function borrarFilaAdmin(tabla, id) {
+            if (!confirm(`¿Estás seguro de eliminar este registro de la tabla ${tabla}? Esta acción no se puede deshacer.`)) return;
+            const res = await fetch('/api/borrar-fila', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tabla, id })
+            });
+            if (res.ok) {
+                cargarTablaAdmin(tabla);
+            } else {
+                alert('Error al eliminar la fila');
+            }
+        }
+
+        async function agregarFilaAdmin() {
+            const btn = document.getElementById('btn_agregar_fila_admin');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AGREGANDO...';
+            try {
+                const tabla = document.getElementById('admin_tablas').value;
+                const res = await fetch('/api/agregar-fila', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tabla }) });
+                if (res.ok) { alert('Fila agregada'); cargarTablaAdmin(tabla); }
+                else { alert('Error al agregar fila'); }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-plus"></i> AGREGAR FILA';
+            }
+        }
+
+        // (Nuevas funciones unificadas de edición están en la sección admin superior)
+
+        async function generarProximoNumero() {
+            const res = await fetch('/api/proximo-numero');
+            const data = await res.json();
+            if (data.proximo_numero) document.getElementById('n_numero').value = data.proximo_numero;
+        }
+
+        async function guardarNuevoAnimal() {
+            const btn = document.getElementById('btn_guardar_nuevo_animal');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO...';
+            try {
+                const num = document.getElementById('n_numero').value;
+                const nom = document.getElementById('n_nombre').value;
+                const sexo = document.getElementById('n_sexo').value;
+                const tipo = document.getElementById('n_tipo').value;
+                if (!num || !nom) return alert('Número y nombre obligatorios');
+                const res = await fetch('/api/registrar-animal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numero: num, nombre: nom, sexo, tipo, estatus: 'Vivos' }) });
+                if (res.ok) { alert('Animal creado'); tabFichas('buscar'); cargarDatosBasicos(); }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> CREAR FICHA BÁSICA';
+            }
+        }
+
+        function abrirModalRapido(tipo, num, nom) {
+            ocrTarget = tipo === 'leche' ? 'm_peso' : null;
+            const modal = document.getElementById('modal_evento');
+            modal.style.display = 'flex';
+            document.getElementById('m_titulo').innerText = tipo === 'parto' ? 'Registrar Parto' : 'Registrar Pesaje';
+            document.getElementById('m_info').innerText = `${nom} (#${num})`;
+            document.getElementById('m_parto_inputs').style.display = tipo === 'parto' ? 'block' : 'none';
+            document.getElementById('m_leche_inputs').style.display = tipo === 'leche' ? 'block' : 'none';
+            window.modalCtx = { tipo, num, nom };
+        }
+
+        function cerrarModalRapido() { document.getElementById('modal_evento').style.display = 'none'; }
+
+                async function registrarEventoRapido() {
+            const ctx = window.modalCtx;
+            const peso = document.getElementById('m_peso')?.value;
+            const fecha = document.getElementById('m_fecha_p')?.value;
+            const c_num = document.getElementById('m_cria_num')?.value;
+            const c_sexo = document.getElementById('m_cria_sexo')?.value;
+
+            if (ctx.tipo === 'leche') {
+                if (!peso) return alert('Ingrese el peso');
+            } else {
+                if (!fecha || !c_num) return alert('Fecha y número de cría obligatorios');
+            }
+
+            const btn = document.getElementById('btn_guardar_evento_rapido');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO...';
+            try {
+                if (ctx.tipo === 'leche') {
+                    const res = await fetch('/api/registrar-leche', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numero: ctx.num, nombre: ctx.nom, peso_tobo: peso, peso_tobo_kg: 0.865, turno: ordeñoActual, creado_por: currentUser.user }) });
+                    const data = await res.json();
+                    if (data.success) { alert('Pesaje guardado'); cerrarModalRapido(); verFicha(ctx.num); }
+                    else { alert('Error: ' + (data.error || 'Error desconocido')); }
+                } else {
+                    const res = await fetch('/api/registrar-parto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fecha, num_madre: ctx.num, nom_madre: ctx.nom, num_asignado: c_num, sexo_cria: c_sexo, creado_por: currentUser.user }) });
+                    const data = await res.json();
+                    if (data.success) { 
+                        alert('Parto guardado'); 
+                        cerrarModalRapido(); 
+                        await cargarDatosBasicos();
+                        verFicha(ctx.num); 
+                    } else {
+                        alert('Error: ' + (data.error || 'Error desconocido'));
+                    }
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> GUARDAR EVENTO';
+            }
+        }
+
+        // ============================================
+        //  MÓDULO REPRODUCCIÓN / SERVICIOS
+        // ============================================
+        let servicioAnimalSel = null; // { numero, nombre }
+
+        function tabServicios(tab) {
+            document.getElementById('tab_s_monta').classList.toggle('activo', tab === 'monta');
+            document.getElementById('tab_s_palpacion').classList.toggle('activo', tab === 'palpacion');
+            document.getElementById('tab_s_historial').classList.toggle('activo', tab === 'historial');
+
+            document.getElementById('s_monta_area').style.display = tab === 'monta' ? 'block' : 'none';
+            document.getElementById('s_palpacion_area').style.display = tab === 'palpacion' ? 'block' : 'none';
+            document.getElementById('s_historial_area').style.display = tab === 'historial' ? 'block' : 'none';
+
+            if (tab === 'historial') servicios_cargarHistorialGral();
+            
+            // Fecha de hoy por defecto si están vacías
+            const hoy = new Date().toISOString().split('T')[0];
+            if (!document.getElementById('s_fecha').value) document.getElementById('s_fecha').value = hoy;
+            if (!document.getElementById('pa_fecha').value) document.getElementById('pa_fecha').value = hoy;
+        }
+
+        function servicios_sugerir(tipo) {
+            const inputId = tipo === 'hembra' ? 's_bus_hembra' : 'pa_bus_hembra';
+            const sugId = tipo === 'hembra' ? 's_sug_hembra' : 'pa_sug_hembra';
+            const q = document.getElementById(inputId).value.toLowerCase().trim();
+            const box = document.getElementById(sugId);
+            
+            if (q.length < 1) { box.style.display = 'none'; return; }
+            
+            const matches = listaAnimales.filter(a => 
+                (String(a.numero).toLowerCase().includes(q) || String(a.nombre).toLowerCase().includes(q))
+            ).slice(0, 8);
+            
+            if (matches.length === 0) { box.style.display = 'none'; return; }
+            
+            box.innerHTML = matches.map(m =>
+                `<div class="suggestion-item" onclick="servicios_selAnimal('${m.numero}', '${(m.nombre || '').replace(/'/g, '\\\'')}', '${tipo}')">${m.nombre || '—'} <span style="color:#94a3b8;">#${m.numero}</span></div>`
+            ).join('');
+            box.style.display = 'block';
+        }
+
+        function servicios_selAnimal(num, nom, tipo) {
+            servicioAnimalSel = { numero: num, nombre: nom };
+            if (tipo === 'hembra' || tipo === 'palpacion') {
+                const prefix = (tipo === 'hembra' ? 's' : 'pa');
+                document.getElementById(`${prefix}_bus_hembra`).value = `${nom} (#${num})`;
+                document.getElementById(`${prefix}_num_hembra`).value = num;
+                document.getElementById(`${prefix}_sug_hembra`).style.display = 'none';
+            }
+        }
+
+        function servicios_mostrarFechaParto(diagnostico) {
+            document.getElementById('pa_sec_parto').style.display = (diagnostico === 'Preñada') ? 'block' : 'none';
+        }
+
+        async function servicios_registrarServicio() {
+            const btn = document.getElementById('btn_registrar_servicio');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO...';
+            try {
+                const num = document.getElementById('s_num_hembra').value;
+                const fecha = document.getElementById('s_fecha').value;
+                if (!num || !fecha) return alert('Selecciona una hembra e indica la fecha.');
+
+                const body = {
+                    numero: num,
+                    fecha: fecha,
+                    nombre: (document.getElementById('s_bus_hembra').value.split(' (')[0]),
+                    tipo: document.getElementById('s_tipo').value,
+                    toro: document.getElementById('s_toro').value,
+                    creado_por: currentUser?.user || 'sistema'
+                };
+
+                const res = await fetch('/api/registrar-servicio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Servicio registrado correctamente.');
+                    document.getElementById('s_bus_hembra').value = '';
+                    document.getElementById('s_num_hembra').value = '';
+                    document.getElementById('s_toro').value = '';
+                } else {
+                    alert('Error: ' + (data.error || 'desconocido'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> REGISTRAR SERVICIO';
+            }
+        }
+
+        async function servicios_registrarPalpacion() {
+            const btn = document.getElementById('btn_registrar_palpacion');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO...';
+            try {
+                const num = document.getElementById('pa_num_hembra').value;
+                const fecha = document.getElementById('pa_fecha').value;
+                const diag = document.getElementById('pa_diagnostico').value;
+                
+                if (!num || !fecha) return alert('Selecciona una hembra e indica la fecha.');
+
+                const body = {
+                    numero: num,
+                    fecha: fecha,
+                    nombre: (document.getElementById('pa_bus_hembra').value.split(' (')[0]),
+                    diagnostico: diag,
+                    observaciones: document.getElementById('pa_observacion').value,
+                    tecnico: document.getElementById('pa_tecnico').value,
+                    fecha_parto_est: diag === 'Preñada' ? document.getElementById('pa_fecha_parto').value : null,
+                    creado_por: currentUser?.user || 'sistema'
+                };
+
+                const res = await fetch('/api/registrar-palpacion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Palpación registrada correctamente.');
+                    await cargarDatosBasicos();
+                    verFicha(num);
+                    document.getElementById('pa_bus_hembra').value = '';
+                    document.getElementById('pa_num_hembra').value = '';
+                    document.getElementById('pa_tecnico').value = '';
+                    document.getElementById('pa_observacion').value = '';
+                    document.getElementById('pa_sec_parto').style.display = 'none';
+                } else {
+                    alert('Error: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> REGISTRAR PALPACIÓN';
+            }
+        }
+
+        async function servicios_cargarHistorialGral() {
+            const tbody = document.getElementById('servicios_lista_body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Cargando...</td></tr>';
+            try {
+                const resS = await fetch('/api/tablas/servicios');
+                const resP = await fetch('/api/tablas/palpaciones');
+                const dataS = await resS.json();
+                const dataP = await resP.json();
+
+                const hist = [
+                    ...(dataS.data || []).map(s => ({...s, evento: s.tipo || 'Servicio', detalle: s.toro || '', responsable: s.creado_por, tipo: 'servicio'})),
+                    ...(dataP.data || []).map(p => ({...p, evento: 'Palpación', detalle: p.diagnostico || '', responsable: p.tecnico || '', tipo: 'palpacion'}))
+                ].sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 50);
+
+                if (hist.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">No hay registros recientes.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = hist.map(h => `
+                    <tr>
+                        <td>${formatearFecha(h.fecha)}</td>
+                        <td>${h.nombre || '—'}</td>
+                        <td style="font-weight:bold;">${h.numero || '—'}</td>
+                        <td><span class="badge" style="background:${h.tipo === 'palpacion' ? '#e0f2fe' : '#f0fdf4'}; color:${h.tipo === 'palpacion' ? '#0369a1' : '#16a34a'};">${h.evento}</span></td>
+                        <td><b>${h.detalle}</b></td>
+                        <td>${h.responsable || h.toro || '—'}</td>
+                        <td style="font-size:11px; color:#666;">${h.observaciones || h.comentarios || '—'}</td>
+                    </tr>
+                `).join('');
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Error al cargar historial.</td></tr>'; }
+        }
+    </script>
+</body>
+
+</html>

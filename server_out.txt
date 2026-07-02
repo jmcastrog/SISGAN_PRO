@@ -1,0 +1,19 @@
+
+=============================================
+   SISGAN PRO - Iniciando servidor...
+=============================================
+  Base de datos: OK (D:\Proyectos\SISGAN_PRO\data\sisgan_pro.db)
+  Tablas: OK
+  Usuario admin: OK
+  OCR Tesseract: Listo
+
+  =============================================
+  SERVIDOR SISGAN PRO ACTIVO
+  =============================================
+  URL LOCAL:     http://localhost:5000
+  URL WIFI:      http://192.168.1.104:5000
+  URL TAILSCALE: http://100.65.222.17:5000 (Acceso Remoto)
+  =============================================
+  Usuario: admin
+  Clave:   admin123
+  =============================================
