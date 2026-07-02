@@ -1,0 +1,558 @@
+object FormConsultarAnimal: TFormConsultarAnimal
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  Caption = 'Consulta de Animal'
+  ClientHeight = 700
+  ClientWidth = 680
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  PixelsPerInch = 96
+  TextHeight = 13
+  object pnlTop: TPanel
+    Left = 0
+    Top = 0
+    Width = 680
+    Height = 35
+    Align = alTop
+    TabOrder = 0
+    object lblTitulo: TLabel
+      Left = 1
+      Top = 1
+      Width = 678
+      Height = 33
+      Align = alClient
+      Alignment = taCenter
+      Caption = 'Consulta de Animal'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+      Layout = tlCenter
+      ExplicitWidth = 118
+      ExplicitHeight = 14
+    end
+  end
+  object pnlSearch: TPanel
+    Left = 0
+    Top = 35
+    Width = 680
+    Height = 45
+    Align = alTop
+    BevelOuter = bvNone
+    ParentColor = True
+    TabOrder = 1
+    object lblBuscar: TLabel
+      Left = 12
+      Top = 4
+      Width = 36
+      Height = 13
+      Caption = 'Buscar:'
+    end
+    object edtBuscar: TEdit
+      Left = 12
+      Top = 20
+      Width = 300
+      Height = 21
+      TabOrder = 0
+      OnChange = OnBuscarChange
+      OnKeyDown = OnBuscarKeyDown
+    end
+  end
+  object lbSugerencias: TListBox
+    Left = 12
+    Top = 80
+    Width = 304
+    Height = 130
+    ItemHeight = 13
+    TabOrder = 2
+    Visible = False
+    OnClick = OnSugerenciaClick
+    OnDblClick = OnSugerenciaDblClick
+  end
+  object pnlDetails: TPanel
+    Left = 0
+    Top = 80
+    Width = 680
+    Height = 570
+    Align = alClient
+    BevelOuter = bvNone
+    ParentColor = True
+    TabOrder = 3
+    object PageControl1: TPageControl
+      Left = 0
+      Top = 0
+      Width = 680
+      Height = 570
+      ActivePage = TabProduccion
+      Align = alClient
+      TabOrder = 0
+      object TabGeneral: TTabSheet
+        Caption = 'General'
+        object ScrollBox1: TScrollBox
+          Left = 0
+          Top = 0
+          Width = 672
+          Height = 542
+          Align = alClient
+          TabOrder = 0
+          object lblNumero: TLabel
+            Left = 20
+            Top = 10
+            Width = 41
+            Height = 13
+            Caption = 'N'#250'mero:'
+            FocusControl = edtNumero
+          end
+          object lblNombre: TLabel
+            Left = 253
+            Top = 10
+            Width = 41
+            Height = 13
+            Caption = 'Nombre:'
+            FocusControl = edtNombre
+          end
+          object lblFechaNac: TLabel
+            Left = 20
+            Top = 40
+            Width = 58
+            Height = 13
+            Caption = 'Fecha Nac.:'
+            FocusControl = dtpFechaNac
+          end
+          object lblEdad: TLabel
+            Left = 253
+            Top = 42
+            Width = 28
+            Height = 13
+            Caption = 'Edad:'
+            FocusControl = edtEdad
+          end
+          object lblSexo: TLabel
+            Left = 20
+            Top = 70
+            Width = 28
+            Height = 13
+            Caption = 'Sexo:'
+            FocusControl = cmbSexo
+          end
+          object lblRaza: TLabel
+            Left = 253
+            Top = 70
+            Width = 28
+            Height = 13
+            Caption = 'Raza:'
+            FocusControl = edtRaza
+          end
+          object lblTipo: TLabel
+            Left = 20
+            Top = 100
+            Width = 24
+            Height = 13
+            Caption = 'Tipo:'
+            FocusControl = cmbTipo
+          end
+          object lblLote: TLabel
+            Left = 253
+            Top = 100
+            Width = 25
+            Height = 13
+            Caption = 'Lote:'
+            FocusControl = edtLote
+          end
+          object lblEstatus: TLabel
+            Left = 20
+            Top = 130
+            Width = 40
+            Height = 13
+            Caption = 'Estatus:'
+            FocusControl = cmbEstatus
+          end
+          object lblPropietario: TLabel
+            Left = 253
+            Top = 130
+            Width = 56
+            Height = 13
+            Caption = 'Propietario:'
+            FocusControl = edtPropietario
+          end
+          object lblNumMadre: TLabel
+            Left = 20
+            Top = 160
+            Width = 62
+            Height = 13
+            Caption = 'N'#250'm. Madre:'
+            FocusControl = edtNumMadre
+          end
+          object lblNomMadre: TLabel
+            Left = 253
+            Top = 160
+            Width = 62
+            Height = 13
+            Caption = 'Nom. Madre:'
+            FocusControl = edtNomMadre
+          end
+          object lblPadre: TLabel
+            Left = 20
+            Top = 190
+            Width = 32
+            Height = 13
+            Caption = 'Padre:'
+            FocusControl = edtPadre
+          end
+          object lblPesoNacer: TLabel
+            Left = 20
+            Top = 220
+            Width = 79
+            Height = 13
+            Caption = 'Peso nacer (kg):'
+            FocusControl = edtPesoNacer
+          end
+          object lblEstatusRepro: TLabel
+            Left = 20
+            Top = 250
+            Width = 55
+            Height = 13
+            Caption = 'Est. Repro:'
+            FocusControl = cmbEstatusRepro
+          end
+          object lblFechaPartoEst: TLabel
+            Left = 253
+            Top = 250
+            Width = 65
+            Height = 13
+            Caption = 'F. Parto Est.:'
+            FocusControl = dtpFechaPartoEst
+          end
+          object lblComentarios: TLabel
+            Left = 20
+            Top = 280
+            Width = 64
+            Height = 13
+            Caption = 'Comentarios:'
+            FocusControl = memComentarios
+          end
+          object lblFotoAnimal: TLabel
+            Left = 20
+            Top = 370
+            Width = 60
+            Height = 13
+            Caption = 'Foto Animal:'
+            FocusControl = edtFotoAnimal
+          end
+          object lblFotoHierro: TLabel
+            Left = 20
+            Top = 400
+            Width = 58
+            Height = 13
+            Caption = 'Foto Hierro:'
+            FocusControl = edtFotoHierro
+          end
+          object lblEstatusReproEst: TLabel
+            Left = 100
+            Top = 272
+            Width = 3
+            Height = 13
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clBlue
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = [fsBold]
+            ParentFont = False
+          end
+          object edtNumero: TEdit
+            Left = 100
+            Top = 8
+            Width = 100
+            Height = 21
+            Color = clSilver
+            ReadOnly = True
+            TabOrder = 0
+          end
+          object edtNombre: TEdit
+            Left = 338
+            Top = 8
+            Width = 182
+            Height = 21
+            TabOrder = 1
+          end
+          object dtpFechaNac: TDateTimePicker
+            Left = 100
+            Top = 38
+            Width = 120
+            Height = 21
+            Date = 45658.000000000000000000
+            Format = 'dd-MM-yyyy'
+            Time = 45658.000000000000000000
+            TabOrder = 2
+          end
+          object edtEdad: TEdit
+            Left = 338
+            Top = 38
+            Width = 120
+            Height = 21
+            Color = clSilver
+            ReadOnly = True
+            TabOrder = 3
+          end
+          object cmbSexo: TComboBox
+            Left = 100
+            Top = 68
+            Width = 100
+            Height = 21
+            Style = csDropDownList
+            ItemIndex = 0
+            TabOrder = 4
+            Text = 'Hembra'
+            Items.Strings = (
+              'Hembra'
+              'Macho')
+          end
+          object edtRaza: TEdit
+            Left = 338
+            Top = 68
+            Width = 150
+            Height = 21
+            TabOrder = 5
+          end
+          object cmbTipo: TComboBox
+            Left = 100
+            Top = 98
+            Width = 130
+            Height = 21
+            Style = csDropDownList
+            ItemIndex = 0
+            TabOrder = 6
+            Text = 'Vaca'
+            Items.Strings = (
+              'Vaca'
+              'Becerra'
+              'Becerro'
+              'Becerros'
+              'Toro'
+              'Novilla'
+              'Novillo'
+              'Buey')
+          end
+          object edtLote: TEdit
+            Left = 338
+            Top = 98
+            Width = 150
+            Height = 21
+            TabOrder = 7
+          end
+          object cmbEstatus: TComboBox
+            Left = 100
+            Top = 128
+            Width = 120
+            Height = 21
+            Style = csDropDownList
+            ItemIndex = 0
+            TabOrder = 8
+            Text = 'Vivos'
+            Items.Strings = (
+              'Vivos'
+              'Muertos'
+              'Vendidos'
+              'Desaparecido')
+          end
+          object edtPropietario: TEdit
+            Left = 338
+            Top = 128
+            Width = 150
+            Height = 21
+            TabOrder = 9
+          end
+          object edtNumMadre: TEdit
+            Left = 100
+            Top = 158
+            Width = 100
+            Height = 21
+            TabOrder = 10
+          end
+          object edtNomMadre: TEdit
+            Left = 338
+            Top = 158
+            Width = 150
+            Height = 21
+            TabOrder = 11
+          end
+          object edtPadre: TEdit
+            Left = 100
+            Top = 188
+            Width = 200
+            Height = 21
+            TabOrder = 12
+          end
+          object edtPesoNacer: TEdit
+            Left = 120
+            Top = 218
+            Width = 80
+            Height = 21
+            TabOrder = 13
+          end
+          object cmbEstatusRepro: TComboBox
+            Left = 100
+            Top = 248
+            Width = 120
+            Height = 21
+            Style = csDropDownList
+            ItemIndex = 0
+            TabOrder = 14
+            Text = 'Vac'#237'a'
+            Items.Strings = (
+              'Vac'#237'a'
+              'Pre'#241'ada'
+              'Gestante'
+              'Servida'
+              'En Lactancia')
+          end
+          object dtpFechaPartoEst: TDateTimePicker
+            Left = 338
+            Top = 248
+            Width = 120
+            Height = 21
+            Date = 45658.000000000000000000
+            Format = 'dd-MM-yyyy'
+            Time = 45658.000000000000000000
+            TabOrder = 15
+          end
+          object memComentarios: TMemo
+            Left = 20
+            Top = 298
+            Width = 490
+            Height = 60
+            ScrollBars = ssVertical
+            TabOrder = 16
+          end
+          object edtFotoAnimal: TEdit
+            Left = 100
+            Top = 368
+            Width = 300
+            Height = 21
+            TabOrder = 17
+          end
+          object btnFotoAnimal: TButton
+            Left = 406
+            Top = 368
+            Width = 75
+            Height = 21
+            Caption = 'Examinar...'
+            TabOrder = 18
+          end
+          object edtFotoHierro: TEdit
+            Left = 100
+            Top = 398
+            Width = 300
+            Height = 21
+            TabOrder = 19
+          end
+          object btnFotoHierro: TButton
+            Left = 406
+            Top = 398
+            Width = 75
+            Height = 21
+            Caption = 'Examinar...'
+            TabOrder = 20
+          end
+        end
+      end
+      object TabProduccion: TTabSheet
+        Caption = 'Producci'#243'n'
+        ImageIndex = 1
+        object lblParto: TLabel
+          Left = 14
+          Top = 10
+          Width = 30
+          Height = 13
+          Caption = 'Parto:'
+        end
+        object cmbSeleccionParto: TComboBox
+          Left = 64
+          Top = 7
+          Width = 200
+          Height = 21
+          Style = csDropDownList
+          DropDownCount = 15
+          TabOrder = 0
+          OnChange = cmbSeleccionPartoChange
+        end
+        object sgResumenPartos: TStringGrid
+          Left = 3
+          Top = 32
+          Width = 668
+          Height = 100
+          ColCount = 7
+          DefaultColWidth = 100
+          FixedCols = 0
+          RowCount = 2
+          FixedRows = 1
+          Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect]
+          TabOrder = 2
+          OnClick = sgResumenPartosClick
+        end
+        object sgTablaTIM: TStringGrid
+          Left = 3
+          Top = 138
+          Width = 668
+          Height = 220
+          ColCount = 2
+          DefaultColWidth = 90
+          FixedRows = 0
+          Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect]
+          ScrollBars = ssHorizontal
+          TabOrder = 1
+        end
+      end
+    end
+  end
+  object pnlBottom: TPanel
+    Left = 0
+    Top = 650
+    Width = 680
+    Height = 50
+    Align = alBottom
+    TabOrder = 4
+    object btnEditar: TButton
+      Left = 20
+      Top = 10
+      Width = 120
+      Height = 30
+      Caption = 'EDITAR'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 0
+      OnClick = btnEditarClick
+    end
+    object btnCerrar: TButton
+      Left = 420
+      Top = 10
+      Width = 100
+      Height = 30
+      Caption = 'Cerrar'
+      TabOrder = 1
+      OnClick = btnCerrarClick
+    end
+  end
+  object TimerSugerir: TTimer
+    Enabled = False
+    Interval = 200
+    OnTimer = OnSugerirTimer
+    Left = 480
+    Top = 40
+  end
+end

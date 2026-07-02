@@ -1,0 +1,256 @@
+object FormControlLeche: TFormControlLeche
+  Left = 0
+  Top = 0
+  Caption = 'Control Lechero - Pesadas'
+  ClientHeight = 520
+  ClientWidth = 634
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  BorderStyle = bsDialog
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object pnlTop: TPanel
+    Left = 0
+    Top = 0
+    Width = 634
+    Height = 100
+    Align = alTop
+    BevelOuter = bvNone
+    ParentColor = True
+    TabOrder = 0
+    object lblFecha: TLabel
+      Left = 12
+      Top = 12
+      Caption = 'Fecha:'
+      Font.Style = [fsBold]
+    end
+    object dtpFecha: TDateTimePicker
+      Left = 12
+      Top = 32
+      Width = 140
+      Format = 'yyyy-MM-dd'
+    end
+    object lblTurno: TLabel
+      Left = 170
+      Top = 12
+      Caption = 'Turno:'
+      Font.Style = [fsBold]
+    end
+    object rbManiana: TRadioButton
+      Left = 170
+      Top = 28
+      Width = 73
+      Height = 17
+      Caption = 'Ma'#241'ana'
+      Checked = True
+      TabOrder = 0
+      TabStop = True
+    end
+    object rbTarde: TRadioButton
+      Left = 250
+      Top = 28
+      Width = 73
+      Height = 17
+      Caption = 'Tarde'
+      TabOrder = 1
+    end
+    object lblTobo: TLabel
+      Left = 350
+      Top = 12
+      Caption = 'Peso del tobo (kg):'
+      Font.Style = [fsBold]
+    end
+    object edtTobo: TEdit
+      Left = 350
+      Top = 28
+      Width = 80
+      OnChange = OnPesoChange
+    end
+  end
+  object pnlSearch: TPanel
+    Left = 0
+    Top = 70
+    Width = 634
+    Height = 70
+    Align = alTop
+    BevelOuter = bvNone
+    ParentColor = True
+    TabOrder = 1
+    object lblBuscar: TLabel
+      Left = 12
+      Top = 8
+      Caption = 'Buscar vaca (n'#250'mero o nombre):'
+      Font.Style = [fsBold]
+    end
+    object edtBuscar: TEdit
+      Left = 12
+      Top = 26
+      Width = 250
+      OnChange = OnBuscarChange
+      OnKeyDown = OnBuscarKeyDown
+    end
+    object lblPeso: TLabel
+      Left = 280
+      Top = 8
+      Caption = 'Peso bruto (con tobo):'
+      Font.Style = [fsBold]
+    end
+    object edtPeso: TEdit
+      Left = 280
+      Top = 26
+      Width = 100
+      OnChange = OnPesoChange
+      OnKeyDown = OnPesoKeyDown
+    end
+    object lblNeto: TLabel
+      Left = 280
+      Top = 52
+      Caption = 'Neto: -- kg'
+      Font.Style = [fsBold]
+      Font.Color = clBlue
+    end
+    object btnAgregar: TButton
+      Left = 400
+      Top = 24
+      Width = 100
+      Height = 28
+      Caption = 'Agregar'
+      TabOrder = 0
+      OnClick = OnAgregarClick
+    end
+  end
+  object lbFechas: TListBox
+    Left = 12
+    Top = 110
+    Width = 250
+    Height = 200
+    ItemHeight = 16
+    TabOrder = 2
+    Visible = False
+    OnClick = OnFechaClick
+  end
+  object lbSugerencias: TListBox
+    Left = 12
+    Top = 170
+    Width = 250
+    Height = 150
+    ItemHeight = 16
+    TabOrder = 3
+    Visible = False
+    OnClick = OnSugerenciaClick
+    OnDblClick = OnSugerenciaDblClick
+  end
+  object pnlClient: TPanel
+    Left = 0
+    Top = 170
+    Width = 634
+    Height = 300
+    Align = alClient
+    BevelOuter = bvNone
+    ParentColor = True
+    TabOrder = 4
+    object lblCount: TLabel
+      Left = 12
+      Top = 8
+      Caption = '0 vacas'
+      Font.Style = [fsBold]
+    end
+    object lblTotal: TLabel
+      Left = 120
+      Top = 8
+      Caption = 'Total: 0 kg'
+      Font.Style = [fsBold]
+    end
+    object sgLista: TStringGrid
+      Left = 12
+      Top = 30
+      Width = 600
+      Height = 290
+      ColCount = 4
+      FixedCols = 0
+      RowCount = 2
+      FixedRows = 1
+      Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goDrawFocusSelected, goEditing, goAlwaysShowEditor]
+      ScrollBars = ssVertical
+      OnKeyDown = OnGridKeyDown
+      OnSetEditText = OnGridSetEditText
+      ColWidths = (
+        80
+        180
+        100
+        100)
+    end
+  end
+  object pnlBottom: TPanel
+    Left = 0
+    Top = 470
+    Width = 634
+    Height = 50
+    Align = alBottom
+    BevelOuter = bvNone
+    ParentColor = True
+    TabOrder = 5
+    object btnGrabar: TButton
+      Left = 12
+      Top = 10
+      Width = 140
+      Height = 30
+      Caption = 'GRABAR EN BD'
+      Enabled = False
+      Font.Style = [fsBold]
+      TabOrder = 0
+      OnClick = OnGrabarClick
+    end
+    object btnConsultar: TButton
+      Left = 160
+      Top = 10
+      Width = 100
+      Height = 30
+      Caption = 'Consultar'
+      TabOrder = 1
+      OnClick = OnConsultarClick
+    end
+    object btnEliminar: TButton
+      Left = 268
+      Top = 10
+      Width = 80
+      Height = 30
+      Caption = 'Eliminar'
+      Enabled = False
+      TabOrder = 2
+      OnClick = OnEliminarClick
+    end
+    object btnLimpiar: TButton
+      Left = 356
+      Top = 10
+      Width = 100
+      Height = 30
+      Caption = 'Limpiar'
+      TabOrder = 3
+      OnClick = OnLimpiarClick
+    end
+    object btnCerrar: TButton
+      Left = 520
+      Top = 10
+      Width = 100
+      Height = 30
+      Caption = 'Cerrar'
+      TabOrder = 4
+      OnClick = OnCerrarClick
+    end
+  end
+  object TimerSugerir: TTimer
+    Enabled = False
+    Interval = 250
+    OnTimer = OnSugerirTimer
+  end
+end

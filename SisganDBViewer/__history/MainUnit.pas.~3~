@@ -1,0 +1,2054 @@
+﻿unit MainUnit;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, System.Types, Vcl.Graphics, Winapi.ShellAPI,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, Vcl.Themes, Vcl.Styles, Data.DB, Vcl.Grids, Vcl.DBGrids,
+  UControlLeche,
+  UAddAnimal, UPalpaciones, UBajas, UConsultarAnimal, UDashboard,
+  Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.CheckLst, System.IniFiles,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.UI.Intf,
+  FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
+  FireDAC.Phys, FireDAC.VCLUI.Wait, FireDAC.Stan.ExprFuncs,
+  FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.Phys.SQLiteDef, FireDAC.Phys.SQLite,
+  FireDAC.Comp.UI, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf,
+  FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+    System.JSON, System.UITypes, System.DateUtils, System.StrUtils, System.Generics.Collections, Winapi.WinSvc;
+
+type
+  TForm1 = class(TForm)
+    PanelTop: TPanel;
+    cbTables: TComboBox;
+    DBGrid1: TDBGrid;
+    DataSource1: TDataSource;
+    btnCloseApp: TButton;
+    Label1: TLabel;
+    btnRefresh: TButton;
+    btnExportPDF: TButton;
+    btnTogglePanel: TButton;
+    btnDelete: TButton;
+    btnAdd: TButton;
+    btnUndo: TButton;
+    TimerUndo: TTimer;
+    btnToggleService: TButton;
+    TimerStatus: TTimer;
+    lblStatus: TLabel;
+    Label2: TLabel;
+    edtFilter: TEdit;
+    lblFilterEstatus: TLabel;
+    lblFilterTipo: TLabel;
+    lblFilterLote: TLabel;
+    lblFilterPropietario: TLabel;
+    cklFilterEstatus: TCheckListBox;
+    cklFilterTipo: TCheckListBox;
+    cklFilterLote: TCheckListBox;
+    cklFilterPropietario: TCheckListBox;
+    btnFilterEstatus: TButton;
+    btnFilterTipo: TButton;
+    btnFilterLote: TButton;
+    btnFilterPropietario: TButton;
+    PanelLeft: TPanel;
+    chkColumns: TCheckListBox;
+    Splitter1: TSplitter;
+    lblRecordCount: TLabel;
+    btnRenumerar: TButton;
+    FConnection: TFDConnection;
+    FQuery: TFDQuery;
+    FDPhysSQLiteDriver: TFDPhysSQLiteDriverLink;
+    FDGUIxWaitCursor: TFDGUIxWaitCursor;
+    MainMenu1: TMainMenu;
+    MenuArchivo: TMenuItem;
+    Salir1: TMenuItem;
+    MenuHerramientas: TMenuItem;
+    RenumerarAnimal1: TMenuItem;
+    ControlLecheroPesadas1: TMenuItem;
+    Sep1: TMenuItem;
+    MenuEstilo: TMenuItem;
+    procedure btnTogglePanelClick(Sender: TObject);
+    procedure chkColumnsDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure chkColumnsDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+    procedure chkColumnsClickCheck(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure btnConnectClick(Sender: TObject);
+    procedure cbTablesChange(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure btnRefreshClick(Sender: TObject);
+    procedure btnExportPDFClick(Sender: TObject);
+    procedure DBGrid1DblClick(Sender: TObject);
+    procedure DBGrid1TitleClick(Column: TColumn);
+    procedure edtFilterChange(Sender: TObject);
+    procedure FilterComboChange(Sender: TObject);
+    procedure btnFilterClick(Sender: TObject);
+    procedure btnCloseAppClick(Sender: TObject);
+    procedure btnDeleteClick(Sender: TObject);
+    procedure btnAddClick(Sender: TObject);
+    procedure btnUndoClick(Sender: TObject);
+    procedure btnToggleServiceClick(Sender: TObject);
+    procedure TimerStatusTimer(Sender: TObject);
+    procedure TimerUndoTimer(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure menuHerramientasClick(Sender: TObject);
+    procedure btnRenumerarClick(Sender: TObject);
+    procedure FQueryCalcFields(DataSet: TDataSet);
+    procedure FQueryPartosBeforePost(DataSet: TDataSet);
+  private
+    { Private declarations }
+    FCurrentTable: string;
+    FListTipo: TStringList;
+    FListLote: TStringList;
+    FListEstatus: TStringList;
+    FListPropietario: TStringList;
+    FSortColumn: string;
+    FSortAscending: Boolean;
+    FAllowClose: Boolean;
+    function ServicioActivo: Boolean;
+    procedure IniciarServicio;
+    procedure DetenerServicio;
+    procedure LoadTables;
+    procedure SaveTableConfig(const TableName: string);
+    procedure LoadTableConfig(const TableName: string);
+    procedure AutoFitColumns;
+    procedure UpdateFormTitle;
+    procedure ApplyFilters;
+    procedure ApplyPickLists(DataSet: TDataSet = nil);
+    procedure FieldGetText(Sender: TField; var Text: string; DisplayText: Boolean);
+    function DataSetToJSON(DataSet: TDataSet): TJSONArray;
+    function DataSetToJSONWithEdad(DataSet: TDataSet): TJSONArray;
+    class function GetTableSQL(const TableName: string): string;
+    class function CalcEdadFromFechaStr(const FechaStr: string): string;
+    procedure UpdateRecordCount;
+    procedure FQueryAfterPost(DataSet: TDataSet);
+    procedure SetupFilterSlot(CheckList: TCheckListBox; Button: TButton; LabelCtrl: TLabel; var Values: TStringList; const FieldName: string);
+    class function GetCATTable(const FieldName: string): string;
+    class function GetCATAnimalesField(const TableName: string): string;
+    class function GetFKField(const TableName: string): string;
+    class function GetFilterField(const TableName: string; Slot: Integer): string;
+    class function GetFilterLabel(const FieldName: string): string;
+    procedure LoadEstilos;
+    procedure EstiloClick(Sender: TObject);
+    procedure ApplyStyle(const AFileName: string);
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.FormCreate(Sender: TObject);
+var
+  Rule: TFDMapRule;
+begin
+  // Convertir los campos (WIDEMEMO) genéricos de SQLite en texto visible nativo en DBGrid
+  FConnection.FormatOptions.OwnMapRules := True;
+  Rule := FConnection.FormatOptions.MapRules.Add;
+  Rule.SourceDataType := dtWideMemo;
+  Rule.TargetDataType := dtWideString;
+  Rule := FConnection.FormatOptions.MapRules.Add;
+  Rule.SourceDataType := dtMemo;
+  Rule.TargetDataType := dtAnsiString;
+
+  FQuery.OnCalcFields := FQueryCalcFields;
+  DataSource1.DataSet := FQuery;
+
+  // Listas de catálogos
+  FListTipo := TStringList.Create;
+  FListLote := TStringList.Create;
+  FListEstatus := TStringList.Create;
+  FListPropietario := TStringList.Create;
+
+  // Ocultar el panel lateral por defecto
+  PanelLeft.Visible := False;
+  Splitter1.Visible := False;
+
+  FAllowClose := False;
+
+  // Llamar a la conexion automaticamente
+  btnConnectClick(nil);
+
+  // Cargar estilos .vsf disponibles
+  LoadEstilos;
+
+  // Aplicar estilo por defecto (Aqua)
+  ApplyStyle('Aqua');
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  if FQuery.Active then SaveTableConfig(FCurrentTable);
+  if FConnection.Connected then
+    FConnection.Close;
+    
+  FListTipo.Free;
+  FListLote.Free;
+  FListEstatus.Free;
+  FListPropietario.Free;
+end;
+
+procedure TForm1.btnConnectClick(Sender: TObject);
+var
+  DbPath: string;
+begin
+  try
+    // Intentar modo Portable (al lado del EXE)
+    DbPath := ExtractFilePath(ParamStr(0)) + 'sisgan_pro.db';
+    if not FileExists(DbPath) then
+      DbPath := 'D:\Proyectos\SISGAN_PRO\data\sisgan_pro.db'; // Modo desarrollo
+    
+    if not FileExists(DbPath) then
+    begin
+      ShowMessage('Archivo de base de datos no encontrado en: ' + DbPath);
+      Exit;
+    end;
+
+    if FConnection.Connected then
+      FConnection.Close;
+
+    FConnection.Params.Clear;
+    FConnection.Params.Add('DriverID=SQLite');
+    FConnection.Params.Add('Database=' + DbPath);
+    // Opciones para mejorar la concurrencia y evitar bloqueos
+    FConnection.Params.Add('LockingMode=Normal');
+    FConnection.Params.Add('JournalMode=WAL'); // <--- Esto permite lectura/escritura simultanea
+    FConnection.Params.Add('BusyTimeout=10000'); // Esperar hasta 10 segundos si está bloqueada
+    
+    FConnection.Open;
+    // Forzar el modo WAL por si el parametro no fue suficiente
+    FConnection.ExecSQL('PRAGMA journal_mode=WAL');
+    
+    // Crear tabla CAT_Propietario si no existe y poblarla
+    FConnection.ExecSQL(
+      'CREATE TABLE IF NOT EXISTS CAT_Propietario (' +
+      '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+      '  valor TEXT NOT NULL UNIQUE)');
+    // Sincronizar datos huérfanos de animales hacia CAT_XXX
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_Propietario (valor) ' +
+      'SELECT DISTINCT propietario FROM animales WHERE propietario IS NOT NULL');
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_TIPO (valor) ' +
+      'SELECT DISTINCT tipo FROM animales WHERE tipo IS NOT NULL');
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_LOTE (valor) ' +
+      'SELECT DISTINCT lote FROM animales WHERE lote IS NOT NULL');
+    FConnection.ExecSQL(
+      'INSERT OR IGNORE INTO CAT_ESTATUS (valor) ' +
+      'SELECT DISTINCT estatus FROM animales WHERE estatus IS NOT NULL');
+    
+    // Migrar fechas en formato DD-MM-AAAA a AAAA-MM-DD en todas las tablas
+    FConnection.ExecSQL(
+      'UPDATE partos SET fecha = substr(fecha,7,4)||''-''||substr(fecha,4,2)||''-''||substr(fecha,1,2) ' +
+      'WHERE length(fecha)=10 AND substr(fecha,3,1)=''-''');
+    FConnection.ExecSQL(
+      'UPDATE control_leche SET fecha = substr(fecha,7,4)||''-''||substr(fecha,4,2)||''-''||substr(fecha,1,2) ' +
+      'WHERE length(fecha)=10 AND substr(fecha,3,1)=''-''');
+    FConnection.ExecSQL(
+      'UPDATE palpaciones SET fecha = substr(fecha,7,4)||''-''||substr(fecha,4,2)||''-''||substr(fecha,1,2) ' +
+      'WHERE length(fecha)=10 AND substr(fecha,3,1)=''-''');
+    FConnection.ExecSQL(
+      'UPDATE servicios SET fecha = substr(fecha,7,4)||''-''||substr(fecha,4,2)||''-''||substr(fecha,1,2) ' +
+      'WHERE length(fecha)=10 AND substr(fecha,3,1)=''-''');
+    FConnection.ExecSQL(
+      'UPDATE bajas SET fecha = substr(fecha,7,4)||''-''||substr(fecha,4,2)||''-''||substr(fecha,1,2) ' +
+      'WHERE length(fecha)=10 AND substr(fecha,3,1)=''-''');
+    FConnection.ExecSQL(
+      'UPDATE animales SET fecha_nac = substr(fecha_nac,7,4)||''-''||substr(fecha_nac,4,2)||''-''||substr(fecha_nac,1,2) ' +
+      'WHERE length(fecha_nac)=10 AND substr(fecha_nac,3,1)=''-''');
+    FConnection.ExecSQL(
+      'UPDATE animales SET fecha_parto_est = substr(fecha_parto_est,7,4)||''-''||substr(fecha_parto_est,4,2)||''-''||substr(fecha_parto_est,1,2) ' +
+      'WHERE length(fecha_parto_est)=10 AND substr(fecha_parto_est,3,1)=''-''');
+    
+    // Si tipo de parto es Muerto, estatus_cria debe ser Muerto
+    FConnection.ExecSQL(
+      'UPDATE animales SET estatus = ''Muerto'' ' +
+      'WHERE numero IN (SELECT num_asignado FROM partos WHERE estado = ''Muerto'' AND num_asignado IS NOT NULL AND num_asignado != '''') ' +
+      'AND (estatus IS NULL OR estatus != ''Muerto'')');
+    
+    // Eliminar columnas de nombre redundantes de otras tablas
+    try FConnection.ExecSQL('ALTER TABLE partos DROP COLUMN nom_madre'); except end;
+    try FConnection.ExecSQL('ALTER TABLE servicios DROP COLUMN nombre'); except end;
+    try FConnection.ExecSQL('ALTER TABLE control_leche DROP COLUMN nombre_animal'); except end;
+    try FConnection.ExecSQL('ALTER TABLE bajas DROP COLUMN nombre'); except end;
+    try FConnection.ExecSQL('ALTER TABLE bajas DROP COLUMN nombre_animal'); except end;
+    try FConnection.ExecSQL('ALTER TABLE palpaciones DROP COLUMN nombre'); except end;
+    
+    // Migración: Crías → Becerros, propietario desde la madre
+    try FConnection.ExecSQL('UPDATE animales SET tipo = ''Becerros'' WHERE tipo IN (''Becerra'', ''Becerro'')'); except end;
+    try FConnection.ExecSQL('UPDATE animales SET lote = ''Becerros'' WHERE lote = ''Crías'''); except end;
+    try FConnection.ExecSQL('UPDATE animales SET propietario = (SELECT a2.propietario FROM animales a2 WHERE a2.numero = animales.num_madre) WHERE (propietario IS NULL OR propietario = '''') AND num_madre IS NOT NULL AND num_madre != '''''); except end;
+    
+    // Solo mostramos mensaje si no es el arranque automatico
+    if Sender <> nil then
+      ShowMessage('Conexión exitosa a la base de datos SISGAN PRO.');
+    
+    LoadTables;
+  except
+    on E: Exception do
+      ShowMessage('Error de conexión: ' + E.Message);
+  end;
+end;
+
+procedure TForm1.LoadTables;
+var
+  Tables: TStringList;
+begin
+  cbTables.Items.Clear;
+  if not FConnection.Connected then Exit;
+
+  Tables := TStringList.Create;
+  try
+    FConnection.GetTableNames('', '', '', Tables);
+    cbTables.Items.Assign(Tables);
+    if cbTables.Items.Count > 0 then
+    begin
+      cbTables.ItemIndex := 0;
+      cbTablesChange(Self); // Forzar la carga de la primera tabla
+    end;
+  finally
+    Tables.Free;
+  end;
+end;
+
+procedure TForm1.cbTablesChange(Sender: TObject);
+var
+  TableName: string;
+  I: Integer;
+begin
+  if cbTables.ItemIndex = -1 then Exit;
+  
+  // Ocultar cualquier lista de filtro abierta al cambiar de tabla
+  cklFilterEstatus.Visible := False;
+  cklFilterTipo.Visible := False;
+  cklFilterLote.Visible := False;
+  cklFilterPropietario.Visible := False;
+  
+  TableName := cbTables.Items[cbTables.ItemIndex];
+  
+  // Guardar config de la tabla anterior
+  if FQuery.Active and (FCurrentTable <> '') then
+    SaveTableConfig(FCurrentTable);
+
+  FQuery.Close;
+
+  FCurrentTable := TableName;
+  FQuery.Filtered := False;
+  FQuery.Filter := '';
+  FQuery.IndexFieldNames := '';
+  FSortColumn := '';
+
+  FQuery.SQL.Text := GetTableSQL(TableName);
+  FQuery.Fields.Clear;
+  FQuery.FieldDefs.Update;
+  for I := 0 to FQuery.FieldDefs.Count - 1 do
+    FQuery.FieldDefs[I].CreateField(FQuery);
+
+  // Campo calculado Edad (ANTES de Open, como en el original)
+  if SameText(TableName, 'animales') then
+  begin
+    with TStringField.Create(FQuery) do
+    begin
+      FieldName := 'Edad';
+      Calculated := True;
+      Size := 50;
+      DataSet := FQuery;
+    end;
+  end;
+  
+  // Asignar evento de propagación para tablas CAT_XXX
+  if GetCATAnimalesField(TableName) <> '' then
+    FQuery.AfterPost := FQueryAfterPost
+  else
+    FQuery.AfterPost := nil;
+
+  // Asignar reglas de negocio para partos
+  if SameText(TableName, 'partos') then
+    FQuery.BeforePost := FQueryPartosBeforePost
+  else
+    FQuery.BeforePost := nil;
+
+  FQuery.Open;
+  UpdateRecordCount;
+
+  // Bloquear edición de numero en animales para evitar datos huérfanos
+  if SameText(FCurrentTable, 'animales') then
+    if FQuery.FindField('numero') <> nil then
+      FQuery.FieldByName('numero').ReadOnly := True;
+
+  // Limpiar filtro y orden al cambiar de tabla
+  edtFilter.OnChange := nil;
+  edtFilter.Text := '';
+  edtFilter.OnChange := edtFilterChange;
+  
+  chkColumns.Items.Clear;
+
+  // Agregar a la lista de checks
+  for I := 0 to FQuery.FieldCount - 1 do
+  begin
+    if SameText(FQuery.Fields[I].FieldName, 'rowid') or
+       SameText(FQuery.Fields[I].FieldName, 'id') or
+       SameText(FQuery.Fields[I].FieldName, 'id_1') then
+    begin
+      FQuery.Fields[I].Visible := False;
+      Continue;
+    end;
+    
+    chkColumns.Items.Add(FQuery.Fields[I].FieldName);
+    chkColumns.Checked[chkColumns.Items.Count - 1] := True;
+  end;
+
+  // Aplicar formato dd-mm-yyyy a campos que parezcan fechas
+  for I := 0 to FQuery.FieldCount - 1 do
+  begin
+    if ContainsText(FQuery.Fields[I].FieldName, 'fecha') or 
+       ContainsText(FQuery.Fields[I].FieldName, 'creado_en') then
+    begin
+      FQuery.Fields[I].OnGetText := FieldGetText;
+    end;
+  end;
+
+  // Configurar filtros dinámicos por tabla
+  SetupFilterSlot(cklFilterEstatus, btnFilterEstatus, lblFilterEstatus, FListEstatus, GetFilterField(TableName, 0));
+  SetupFilterSlot(cklFilterTipo, btnFilterTipo, lblFilterTipo, FListTipo, GetFilterField(TableName, 1));
+  SetupFilterSlot(cklFilterLote, btnFilterLote, lblFilterLote, FListLote, GetFilterField(TableName, 2));
+  SetupFilterSlot(cklFilterPropietario, btnFilterPropietario, lblFilterPropietario, FListPropietario, GetFilterField(TableName, 3));
+
+  // Aplicar filtros iniciales vacíos
+  ApplyFilters;
+
+  // Cargar si hay configuracion guardada en ViewerSettings.ini
+  LoadTableConfig(FCurrentTable);
+
+  // Escanear datos y autoajustar anchos visuales al contenido
+  AutoFitColumns;
+
+  // Inyectar PickLists en las columnas correspondientes
+  ApplyPickLists;
+
+  // Establecer título del form con la fecha de palpación
+  UpdateFormTitle;
+end;
+
+procedure TForm1.chkColumnsClickCheck(Sender: TObject);
+var
+  Idx: Integer;
+begin
+  Idx := chkColumns.ItemIndex;
+  if (Idx >= 0) and (Idx < FQuery.FieldCount) then
+  begin
+    FQuery.Fields[Idx].Visible := chkColumns.Checked[Idx];
+    SaveTableConfig(FCurrentTable);
+  end;
+end;
+
+procedure TForm1.btnTogglePanelClick(Sender: TObject);
+begin
+  PanelLeft.Visible := not PanelLeft.Visible;
+  Splitter1.Visible := PanelLeft.Visible;
+end;
+
+procedure TForm1.chkColumnsDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+begin
+  // Permite que el control acepte soltar el item solo si viene de sí mismo
+  Accept := (Source = chkColumns);
+end;
+
+procedure TForm1.chkColumnsDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  DropIndex, DragIndex: Integer;
+  Field: TField;
+  I: Integer;
+begin
+  if Source = chkColumns then
+  begin
+    DropIndex := chkColumns.ItemAtPos(Point(X, Y), True);
+    DragIndex := chkColumns.ItemIndex;
+
+    // Si se arrastra debajo del último elemento, lo pone al final
+    if DropIndex = -1 then
+      DropIndex := chkColumns.Items.Count - 1;
+
+    if (DropIndex >= 0) and (DropIndex <> DragIndex) then
+    begin
+      // Mover visualmente el elemento
+      chkColumns.Items.Move(DragIndex, DropIndex);
+      chkColumns.ItemIndex := DropIndex;
+      
+      // Sincronizar el nuevo orden con la tabla y el reporte PDF
+      for I := 0 to chkColumns.Count - 1 do
+      begin
+        Field := FQuery.FindField(chkColumns.Items[I]);
+        if Assigned(Field) then
+          Field.Index := I;
+      end;
+      SaveTableConfig(FCurrentTable);
+    end;
+  end;
+end;
+
+procedure TForm1.SaveTableConfig(const TableName: string);
+var
+  Ini: TIniFile;
+  I: Integer;
+begin
+  if TableName = '' then Exit;
+  Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'ViewerSettings.ini');
+  try
+    Ini.EraseSection(TableName);
+    Ini.WriteInteger(TableName, 'Count', chkColumns.Count);
+    for I := 0 to chkColumns.Count - 1 do
+    begin
+      Ini.WriteString(TableName, 'Field' + IntToStr(I), chkColumns.Items[I]);
+      Ini.WriteBool(TableName, 'Visible' + IntToStr(I), chkColumns.Checked[I]);
+    end;
+  finally
+    Ini.Free;
+  end;
+end;
+
+procedure TForm1.LoadTableConfig(const TableName: string);
+var
+  Ini: TIniFile;
+  I, Count, FoundIdx, TargetIdx: Integer;
+  FName: string;
+  FVis: Boolean;
+  Field: TField;
+begin
+  if TableName = '' then Exit;
+  Ini := TIniFile.Create(ExtractFilePath(ParamStr(0)) + 'ViewerSettings.ini');
+  try
+    Count := Ini.ReadInteger(TableName, 'Count', 0);
+    if Count = 0 then Exit; 
+    
+    TargetIdx := 0;
+    for I := 0 to Count - 1 do
+    begin
+      FName := Ini.ReadString(TableName, 'Field' + IntToStr(I), '');
+      FVis := Ini.ReadBool(TableName, 'Visible' + IntToStr(I), True);
+      
+      FoundIdx := chkColumns.Items.IndexOf(FName);
+      if FoundIdx <> -1 then
+      begin
+        chkColumns.Items.Move(FoundIdx, TargetIdx);
+        chkColumns.Checked[TargetIdx] := FVis;
+        Inc(TargetIdx);
+      end;
+    end;
+    
+    for I := 0 to chkColumns.Count - 1 do
+    begin
+      Field := FQuery.FindField(chkColumns.Items[I]);
+      if Assigned(Field) then
+      begin
+        Field.Index := I;
+        Field.Visible := chkColumns.Checked[I];
+      end;
+    end;
+  finally
+    Ini.Free;
+  end;
+end;
+
+procedure TForm1.btnRefreshClick(Sender: TObject);
+var
+  I: Integer;
+  UpdateSQL: string;
+  Changed: Boolean;
+  KeyField: TField;
+  Field: TField;
+begin
+  if not FQuery.Active then Exit;
+
+  // Forzar que si hay una celda en edición se guarde en la memoria
+  if FQuery.State in [dsEdit, dsInsert] then
+    FQuery.Post;
+
+          // Verificar que hayan cambios reales excluyendo campos virtuales
+          if FQuery.CachedUpdates and (FQuery.ChangeCount > 0) then
+  begin
+    try
+      // Desactivar filtro temporalmente para que registros que cambiaron
+      // de lote/tipo/etc. sigan siendo accesibles durante el guardado
+      FQuery.Filtered := False;
+      FQuery.First;
+      while not FQuery.Eof do
+      begin
+        if FQuery.UpdateStatus = usModified then
+        begin
+          UpdateSQL := 'UPDATE "' + FCurrentTable + '" SET ';
+          Changed := False;
+          for I := 0 to FQuery.FieldCount - 1 do
+          begin
+            Field := FQuery.Fields[I];
+            if Field.Calculated then Continue;
+            if Field.FieldName = 'Edad' then Continue;
+            if Field.FieldName = 'rowid' then Continue;
+            if Field.FieldName = 'id_1' then Continue;
+            if Field.FieldName = 'cantidad' then Continue;
+            // Excluir subconsultas (propietario/estatus/nombre/nom_madre)
+            if (Field.FieldName = 'propietario') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'estatus') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'nom_madre') then Continue;
+            if (Field.FieldName = 'nombre_animal') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'nombre') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'ultimo_servicio') then Continue;
+            if (Field.FieldName = 'ultimo_parto') then Continue;
+            if (Field.FieldName = 'lote') and not SameText(FCurrentTable, 'animales') then Continue;
+            if Field.OldValue = Field.NewValue then Continue;
+            if Changed then UpdateSQL := UpdateSQL + ', ';
+            if Field.FieldName = 'tipo_parto' then
+              UpdateSQL := UpdateSQL + '"estado" = '
+            else
+              UpdateSQL := UpdateSQL + '"' + Field.FieldName + '" = ';
+            if Field.IsNull then
+              UpdateSQL := UpdateSQL + 'NULL'
+            else
+              UpdateSQL := UpdateSQL + QuotedStr(VarToStr(Field.Value));
+            Changed := True;
+          end;
+          if Changed then
+          begin
+            KeyField := FQuery.FindField('id');
+            if KeyField = nil then KeyField := FQuery.FindField('clave');
+            if KeyField = nil then KeyField := FQuery.FindField('rowid');
+            if KeyField <> nil then
+            begin
+              if KeyField.DataType in [ftString, ftWideString] then
+                UpdateSQL := UpdateSQL + ' WHERE "' + KeyField.FieldName + '" = ' + QuotedStr(KeyField.AsString)
+              else
+                UpdateSQL := UpdateSQL + ' WHERE "' + KeyField.FieldName + '" = ' + KeyField.AsString;
+              FConnection.ExecSQL(UpdateSQL);
+            end;
+          end;
+        end
+        else if FQuery.UpdateStatus = usInserted then
+        begin
+          UpdateSQL := 'INSERT INTO "' + FCurrentTable + '" (';
+          Changed := False;
+          for I := 0 to FQuery.FieldCount - 1 do
+          begin
+            Field := FQuery.Fields[I];
+            if Field.Calculated then Continue;
+            if Field.FieldName = 'Edad' then Continue;
+            if Field.FieldName = 'rowid' then Continue;
+            if Field.FieldName = 'id_1' then Continue;
+            if Field.FieldName = 'cantidad' then Continue;
+            if (Field.FieldName = 'propietario') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'estatus') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'nom_madre') then Continue;
+            if (Field.FieldName = 'nombre_animal') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'nombre') and not SameText(FCurrentTable, 'animales') then Continue;
+            if (Field.FieldName = 'ultimo_servicio') then Continue;
+            if (Field.FieldName = 'ultimo_parto') then Continue;
+            if (Field.FieldName = 'lote') and not SameText(FCurrentTable, 'animales') then Continue;
+            if Field.IsNull then Continue;
+            if Changed then UpdateSQL := UpdateSQL + ', ';
+            if Field.FieldName = 'tipo_parto' then
+              UpdateSQL := UpdateSQL + '"estado"'
+            else
+              UpdateSQL := UpdateSQL + '"' + Field.FieldName + '"';
+            Changed := True;
+          end;
+          if Changed then
+          begin
+            UpdateSQL := UpdateSQL + ') VALUES (';
+            Changed := False;
+            for I := 0 to FQuery.FieldCount - 1 do
+            begin
+              Field := FQuery.Fields[I];
+              if Field.Calculated then Continue;
+              if Field.FieldName = 'Edad' then Continue;
+              if Field.FieldName = 'rowid' then Continue;
+              if Field.FieldName = 'id_1' then Continue;
+              if Field.FieldName = 'cantidad' then Continue;
+              if (Field.FieldName = 'propietario') and not SameText(FCurrentTable, 'animales') then Continue;
+              if (Field.FieldName = 'estatus') and not SameText(FCurrentTable, 'animales') then Continue;
+              if (Field.FieldName = 'nom_madre') then Continue;
+              if (Field.FieldName = 'nombre_animal') and not SameText(FCurrentTable, 'animales') then Continue;
+              if (Field.FieldName = 'nombre') and not SameText(FCurrentTable, 'animales') then Continue;
+              if (Field.FieldName = 'ultimo_servicio') then Continue;
+              if (Field.FieldName = 'ultimo_parto') then Continue;
+              if (Field.FieldName = 'lote') and not SameText(FCurrentTable, 'animales') then Continue;
+              if Field.IsNull then Continue;
+              if Changed then UpdateSQL := UpdateSQL + ', ';
+              if Field.IsNull then
+                UpdateSQL := UpdateSQL + 'NULL'
+              else
+                UpdateSQL := UpdateSQL + QuotedStr(VarToStr(Field.Value));
+              Changed := True;
+            end;
+            UpdateSQL := UpdateSQL + ')';
+            FConnection.ExecSQL(UpdateSQL);
+          end;
+        end
+        else if FQuery.UpdateStatus = usDeleted then
+        begin
+          KeyField := FQuery.FindField('id');
+          if KeyField = nil then KeyField := FQuery.FindField('clave');
+          if KeyField = nil then KeyField := FQuery.FindField('rowid');
+          if KeyField <> nil then
+          begin
+            if KeyField.DataType in [ftString, ftWideString] then
+              FConnection.ExecSQL('DELETE FROM "' + FCurrentTable + '" WHERE "' + KeyField.FieldName + '" = ' + QuotedStr(KeyField.AsString))
+            else
+              FConnection.ExecSQL('DELETE FROM "' + FCurrentTable + '" WHERE "' + KeyField.FieldName + '" = ' + KeyField.AsString);
+          end;
+        end;
+        FQuery.Next;
+      end;
+      FQuery.CommitUpdates;
+      // Actualizar estatus de cr�as en partos con tipo Muerto
+      if SameText(FCurrentTable, 'partos') then
+      begin
+        FConnection.ExecSQL(
+          'UPDATE animales SET estatus = ''Muerto'' ' +
+          'WHERE numero IN (SELECT num_asignado FROM partos WHERE estado = ''Muerto'' AND num_asignado IS NOT NULL AND num_asignado != '''') ' +
+          'AND (estatus IS NULL OR estatus != ''Muerto'')');
+      end;
+      ShowMessage('Se aplicaron los cambios en la base de datos de forma exitosa.');
+    except
+      on E: Exception do
+      begin
+        ShowMessage('Error al guardar: ' + E.Message);
+        Exit;
+      end;
+    end;
+  end;
+  
+  // Reabrir completamente para refrescar datos desde la BD
+  FQuery.Close;
+  FQuery.Open;
+  UpdateRecordCount;
+  ApplyFilters;
+  AutoFitColumns;
+  ApplyPickLists;
+  UpdateFormTitle;
+end;
+
+procedure TForm1.btnRenumerarClick(Sender: TObject);
+var
+  OldNum, NewNum: string;
+  Q: TFDQuery;
+begin
+  if not FQuery.Active then Exit;
+  if not SameText(FCurrentTable, 'animales') then
+  begin
+    ShowMessage('Esta función solo está disponible en la tabla animales.');
+    Exit;
+  end;
+
+  OldNum := '';
+  if FQuery.FindField('numero') <> nil then
+    OldNum := FQuery.FieldByName('numero').AsString;
+  if not InputQuery('Renumerar Animal', 'Número ACTUAL:', OldNum) then Exit;
+  OldNum := Trim(OldNum);
+  if OldNum = '' then Exit;
+
+  NewNum := OldNum;
+  if not InputQuery('Renumerar Animal', 'Número NUEVO para ' + OldNum + ':', NewNum) then Exit;
+  NewNum := Trim(NewNum);
+  if NewNum = '' then Exit;
+  if OldNum = NewNum then
+  begin
+    ShowMessage('El número nuevo debe ser diferente al actual.');
+    Exit;
+  end;
+
+  // Verificar que el nuevo número no exista ya
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := FConnection;
+    Q.SQL.Text := 'SELECT COUNT(*) FROM animales WHERE numero = ' + QuotedStr(NewNum);
+    Q.Open;
+    if Q.Fields[0].AsInteger > 0 then
+    begin
+      ShowMessage('El número ' + NewNum + ' ya existe en la base de datos.');
+      Exit;
+    end;
+  finally
+    Q.Free;
+  end;
+
+  if MessageDlg('¿Renumerar ' + OldNum + ' → ' + NewNum + '? Se actualizarán todas las tablas relacionadas.',
+    mtConfirmation, [mbYes, mbNo], 0) <> mrYes then Exit;
+
+  try
+    FConnection.ExecSQL('UPDATE animales SET numero = ' + QuotedStr(NewNum) + ' WHERE numero = ' + QuotedStr(OldNum));
+    FConnection.ExecSQL('UPDATE animales SET num_madre = ' + QuotedStr(NewNum) + ' WHERE num_madre = ' + QuotedStr(OldNum));
+    FConnection.ExecSQL('UPDATE partos SET num_madre = ' + QuotedStr(NewNum) + ' WHERE num_madre = ' + QuotedStr(OldNum));
+    FConnection.ExecSQL('UPDATE servicios SET numero = ' + QuotedStr(NewNum) + ' WHERE numero = ' + QuotedStr(OldNum));
+    FConnection.ExecSQL('UPDATE control_leche SET numero_animal = ' + QuotedStr(NewNum) + ' WHERE numero_animal = ' + QuotedStr(OldNum));
+    FConnection.ExecSQL('UPDATE bajas SET numero_animal = ' + QuotedStr(NewNum) + ' WHERE numero_animal = ' + QuotedStr(OldNum));
+    FConnection.ExecSQL('UPDATE palpaciones SET numero = ' + QuotedStr(NewNum) + ' WHERE numero = ' + QuotedStr(OldNum));
+    FConnection.ExecSQL('UPDATE animales SET comentarios = comentarios || ' + QuotedStr(' [Renumerado: ' + OldNum + ' -> ' + NewNum + ']') + ' WHERE numero = ' + QuotedStr(NewNum));
+    ShowMessage('Renumeración completada: ' + OldNum + ' → ' + NewNum);
+  except
+    on E: Exception do
+    begin
+      ShowMessage('Error al renumerar: ' + E.Message);
+      Exit;
+    end;
+  end;
+
+  // Refrescar datos
+  FQuery.Close;
+  FQuery.Open;
+  UpdateRecordCount;
+  ApplyFilters;
+  AutoFitColumns;
+  ApplyPickLists;
+end;
+
+procedure TForm1.menuHerramientasClick(Sender: TObject);
+begin
+  if Sender is TMenuItem then
+  begin
+    case TMenuItem(Sender).Tag of
+      1: btnRenumerarClick(nil);
+      2: with TFormControlLeche.Create(nil) do
+         try
+           ShowModal;
+         finally
+           Free;
+         end;
+      3: with TFormAddAnimal.Create(nil) do
+         try
+           ShowModal;
+         finally
+           Free;
+         end;
+      4: with TFormPalpaciones.Create(nil) do
+         try
+           ShowModal;
+         finally
+           Free;
+         end;
+       5: with TFormBajas.Create(nil) do
+          try
+            ShowModal;
+          finally
+            Free;
+          end;
+        6: with TFormConsultarAnimal.Create(nil) do
+          try
+            DBConnection := FConnection;
+            CargarAnimales;
+            ShowModal;
+          finally
+            Free;
+          end;
+        7: with TFormDashboard.Create(nil) do
+          try
+            DBConnection := FConnection;
+            LoadData;
+            ShowModal;
+          finally
+            Free;
+          end;
+      end;
+  end;
+end;
+
+procedure TForm1.btnExportPDFClick(Sender: TObject);
+var
+  HtmlText: TStringList;
+  I: Integer;
+  FilePath: string;
+  TitleDate: string;
+  J: Integer;
+begin
+  if not FQuery.Active or FQuery.IsEmpty then
+  begin
+    ShowMessage('No hay datos para exportar.');
+    Exit;
+  end;
+
+  TitleDate := '';
+  if SameText(FCurrentTable, 'palpaciones') and (cklFilterEstatus.Items.Count > 0) then
+  begin
+    for J := 1 to cklFilterEstatus.Items.Count - 1 do
+      if cklFilterEstatus.Checked[J] then
+      begin
+        if TitleDate <> '' then TitleDate := TitleDate + ', ';
+        TitleDate := TitleDate + cklFilterEstatus.Items[J];
+      end;
+  end
+  else
+    TitleDate := FormatDateTime('DD-MM-YYYY', Now);
+  if TitleDate <> '' then
+    TitleDate := ' - ' + TitleDate;
+
+  HtmlText := TStringList.Create;
+  try
+    HtmlText.Add('<html><head><meta charset="utf-8">');
+    HtmlText.Add('<title>Reporte: ' + cbTables.Text + '</title>');
+    HtmlText.Add('<style>');
+    HtmlText.Add('body { font-family: "Segoe UI", Tahoma, sans-serif; padding: 20px; }');
+    HtmlText.Add('h1 { color: #2c3e50; text-align: center; }');
+    HtmlText.Add('table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }');
+    HtmlText.Add('th { background-color: #34495e; color: white; padding: 3px; text-transform: uppercase; border: 1px solid #bdc3c7; }');
+    HtmlText.Add('td { padding: 2px; border: 1px solid #bdc3c7; text-align: center; }');
+    HtmlText.Add('tr:nth-child(even) { background-color: #f2f2f2; }');
+    HtmlText.Add('@media print { body { padding: 0; } }');
+    HtmlText.Add('</style></head><body>');
+    
+    HtmlText.Add('<h1>Reporte de ' + cbTables.Text + TitleDate + '</h1>');
+    HtmlText.Add('<table><thead><tr>');
+    
+    // Nombres de columnas
+    for I := 0 to FQuery.FieldCount - 1 do
+    begin
+      if FQuery.Fields[I].Visible then
+        HtmlText.Add('<th>' + FQuery.Fields[I].FieldName + '</th>');
+    end;
+    HtmlText.Add('</tr></thead><tbody>');
+    
+    // Filas de datos
+    FQuery.DisableControls; // Acelera el proceso evitando que la grilla parpadee
+    try
+      FQuery.First;
+      while not FQuery.Eof do
+      begin
+        HtmlText.Add('<tr>');
+        for I := 0 to FQuery.FieldCount - 1 do
+        begin
+          if FQuery.Fields[I].Visible then
+            HtmlText.Add('<td>' + FQuery.Fields[I].DisplayText + '</td>');
+        end;
+        HtmlText.Add('</tr>');
+        FQuery.Next;
+      end;
+      FQuery.First;
+    finally
+      FQuery.EnableControls;
+    end;
+    
+    HtmlText.Add('</tbody></table>');
+    HtmlText.Add('<script>window.onload = function() { window.print(); }</script>');
+    HtmlText.Add('</body></html>');
+
+    // Mismo nivel que el .exe
+    FilePath := ExtractFilePath(ParamStr(0)) + 'Reporte_' + cbTables.Text + '.html';
+    HtmlText.SaveToFile(FilePath, TEncoding.UTF8);
+    
+    // Abrir automáticamente el HTML en Chrome/Edge
+    ShellExecute(0, 'open', PChar(FilePath), nil, nil, SW_SHOWNORMAL);
+  finally
+    HtmlText.Free;
+  end;
+end;
+
+procedure TForm1.AutoFitColumns;
+var
+  I, TempLen, TotalW, GridLeft: Integer;
+  MaxAnchos: array of Integer;
+  Bm: TBookmark;
+begin
+  if not FQuery.Active then Exit;
+
+  SetLength(MaxAnchos, DBGrid1.Columns.Count);
+  DBGrid1.Canvas.Font.Assign(DBGrid1.Font);
+  
+  // 1. Minimo inicial: El ancho del titulo de la columna
+  for I := 0 to DBGrid1.Columns.Count - 1 do
+  begin
+    MaxAnchos[I] := DBGrid1.Canvas.TextWidth(DBGrid1.Columns[I].Title.Caption) + 20; 
+  end;
+
+  // 2. Escanear datos si hay registros
+  if not FQuery.IsEmpty then
+  begin
+    FQuery.DisableControls;
+    Bm := FQuery.GetBookmark;
+    try
+      FQuery.First;
+      while not FQuery.Eof do
+      begin
+        for I := 0 to DBGrid1.Columns.Count - 1 do
+        begin
+          if Assigned(DBGrid1.Columns[I].Field) and DBGrid1.Columns[I].Visible then
+          begin
+            TempLen := DBGrid1.Canvas.TextWidth(DBGrid1.Columns[I].Field.DisplayText) + 15;
+            if TempLen > MaxAnchos[I] then
+              MaxAnchos[I] := TempLen;
+          end;
+        end;
+        FQuery.Next;
+      end;
+    finally
+      if FQuery.BookmarkValid(Bm) then
+        FQuery.GotoBookmark(Bm);
+      FQuery.FreeBookmark(Bm);
+      FQuery.EnableControls;
+    end;
+  end;
+
+  // 3. Aplicar el tamaño, sin techo maximo
+  TotalW := 0;
+  for I := 0 to DBGrid1.Columns.Count - 1 do
+  begin
+    DBGrid1.Columns[I].Width := MaxAnchos[I];
+    if DBGrid1.Columns[I].Visible then
+      TotalW := TotalW + MaxAnchos[I];
+  end;
+
+  // 4. Ajustar ancho del form para mostrar todas las columnas
+  GridLeft := DBGrid1.Left;
+  TotalW := TotalW + GridLeft * 2 + 10;
+  if TotalW > ClientWidth then
+    ClientWidth := TotalW;
+end;
+
+procedure TForm1.UpdateFormTitle;
+var
+  I: Integer;
+  Dates: string;
+begin
+  if SameText(FCurrentTable, 'palpaciones') and (cklFilterEstatus.Items.Count > 0) then
+  begin
+    Dates := '';
+    for I := 1 to cklFilterEstatus.Items.Count - 1 do
+      if cklFilterEstatus.Checked[I] then
+      begin
+        if Dates <> '' then Dates := Dates + ', ';
+        Dates := Dates + cklFilterEstatus.Items[I];
+      end;
+    if Dates = '' then Dates := '(todas)';
+    Caption := 'Palpaciones - Fecha: ' + Dates;
+  end
+  else
+    Caption := 'Visor de Base de Datos SISGAN PRO (SQLite)';
+end;
+
+procedure TForm1.DBGrid1TitleClick(Column: TColumn);
+begin
+  if not Assigned(Column.Field) then Exit;
+  if not FQuery.Active then Exit;
+
+  // Si damos clic en la misma columna, invertimos el orden
+  if FSortColumn = Column.FieldName then
+    FSortAscending := not FSortAscending
+  else
+  begin
+    FSortColumn := Column.FieldName;
+    FSortAscending := True;
+  end;
+
+  // En FireDAC, IndexFieldNames se usa para ordenación local
+  // 'NombreCampo' es ASC, 'NombreCampo:D' es DESC
+  if FSortAscending then
+    FQuery.IndexFieldNames := Column.FieldName
+  else
+    FQuery.IndexFieldNames := Column.FieldName + ':D';
+end;
+
+procedure TForm1.DBGrid1DblClick(Sender: TObject);
+var
+  Numero: string;
+begin
+  if not SameText(FCurrentTable, 'animales') then Exit;
+  if not FQuery.Active then Exit;
+  if FQuery.IsEmpty then Exit;
+
+  Numero := FQuery.FieldByName('numero').AsString;
+  if Numero = '' then Exit;
+
+  with TFormConsultarAnimal.Create(nil) do
+  try
+    DBConnection := FConnection;
+    CargarPorNumero(Numero);
+    ShowModal;
+  finally
+    Free;
+  end;
+end;
+
+procedure TForm1.edtFilterChange(Sender: TObject);
+begin
+  ApplyFilters;
+end;
+
+procedure TForm1.FilterComboChange(Sender: TObject);
+var
+  CheckList: TCheckListBox;
+  I: Integer;
+  AllChecked: Boolean;
+begin
+  if Sender is TCheckListBox then
+  begin
+    CheckList := TCheckListBox(Sender);
+    // 1. Si se hace clic en (Todos), marcar/desmarcar el resto
+    if CheckList.ItemIndex = 0 then
+    begin
+      for I := 1 to CheckList.Items.Count - 1 do
+        CheckList.Checked[I] := CheckList.Checked[0];
+    end
+    else
+    begin
+      // 2. Si se hace clic en otro, sincronizar el estado de (Todos)
+      AllChecked := True;
+      for I := 1 to CheckList.Items.Count - 1 do
+      begin
+        if not CheckList.Checked[I] then
+        begin
+          AllChecked := False;
+          Break;
+        end;
+      end;
+      CheckList.Checked[0] := AllChecked;
+    end;
+  end;
+  ApplyFilters;
+  UpdateFormTitle;
+end;
+
+procedure TForm1.btnFilterClick(Sender: TObject);
+var
+  Target: TCheckListBox;
+begin
+  Target := nil;
+  if Sender = btnFilterEstatus then Target := cklFilterEstatus;
+  if Sender = btnFilterTipo then Target := cklFilterTipo;
+  if Sender = btnFilterLote then Target := cklFilterLote;
+  if Sender = btnFilterPropietario then Target := cklFilterPropietario;
+
+  if Target <> nil then
+  begin
+    Target.Visible := not Target.Visible;
+    if Target.Visible then
+    begin
+      Target.BringToFront;
+      // Ocultar los demas
+      if Target <> cklFilterEstatus then cklFilterEstatus.Visible := False;
+      if Target <> cklFilterTipo then cklFilterTipo.Visible := False;
+      if Target <> cklFilterLote then cklFilterLote.Visible := False;
+      if Target <> cklFilterPropietario then cklFilterPropietario.Visible := False;
+    end;
+  end;
+end;
+
+class function TForm1.GetCATTable(const FieldName: string): string;
+begin
+  if SameText(FieldName, 'tipo') then Result := 'CAT_TIPO'
+  else if SameText(FieldName, 'lote') then Result := 'CAT_LOTE'
+  else if SameText(FieldName, 'estatus') then Result := 'CAT_ESTATUS'
+  else if SameText(FieldName, 'propietario') then Result := 'CAT_Propietario'
+  else Result := '';
+end;
+
+class function TForm1.GetCATAnimalesField(const TableName: string): string;
+begin
+  if SameText(TableName, 'CAT_TIPO') then Result := 'tipo'
+  else if SameText(TableName, 'CAT_LOTE') then Result := 'lote'
+  else if SameText(TableName, 'CAT_ESTATUS') then Result := 'estatus'
+  else if SameText(TableName, 'CAT_Propietario') then Result := 'propietario'
+  else Result := '';
+end;
+
+class function TForm1.GetFKField(const TableName: string): string;
+begin
+  if SameText(TableName, 'partos') then Result := 'num_madre'
+  else if SameText(TableName, 'servicios') then Result := 'numero'
+  else if SameText(TableName, 'palpaciones') then Result := 'numero'
+  else if SameText(TableName, 'control_leche') then Result := 'numero_animal'
+  else if SameText(TableName, 'bajas') then Result := 'numero_animal'
+  else Result := '';
+end;
+
+procedure TForm1.SetupFilterSlot(CheckList: TCheckListBox; Button: TButton; LabelCtrl: TLabel; var Values: TStringList; const FieldName: string);
+var
+  Qry: TFDQuery;
+  I: Integer;
+  CATTable, Val: string;
+begin
+  CheckList.OnClickCheck := nil;
+  CheckList.Items.Clear;
+  Values.Clear;
+  CheckList.Visible := False;
+  Button.Enabled := False;
+  LabelCtrl.Visible := False;
+
+  if (FieldName = '') or not FQuery.Active then Exit;
+
+  try
+    Button.Caption := GetFilterLabel(FieldName) + '...';
+    LabelCtrl.Caption := GetFilterLabel(FieldName);
+    Button.Enabled := True;
+    LabelCtrl.Visible := True;
+
+    CATTable := GetCATTable(FieldName);
+    Qry := TFDQuery.Create(nil);
+    try
+      Qry.Connection := FConnection;
+      if (CATTable <> '') and SameText(FCurrentTable, 'animales') then
+      begin
+        if SameText(FieldName, 'lote') then
+          Qry.SQL.Text := 'SELECT DISTINCT valor FROM ' + CATTable +
+            ' WHERE valor IS NOT NULL AND valor != '''' AND valor IN ' +
+            '(SELECT DISTINCT lote FROM animales WHERE estatus = ''Vivos'' AND lote IS NOT NULL AND lote != '''')' +
+            ' UNION SELECT DISTINCT lote FROM animales WHERE lote IS NOT NULL' +
+            ' AND lote != '''' AND lote NOT IN (SELECT valor FROM ' + CATTable + ')' +
+            ' AND estatus = ''Vivos'' ORDER BY 1'
+        else
+          Qry.SQL.Text := 'SELECT DISTINCT valor FROM ' + CATTable +
+            ' WHERE valor IS NOT NULL' +
+            ' UNION SELECT DISTINCT "' + FieldName + '" FROM ' + FCurrentTable +
+            ' WHERE "' + FieldName + '" IS NOT NULL AND "' + FieldName +
+            '" NOT IN (SELECT valor FROM ' + CATTable + ') ORDER BY 1'
+      end
+      else if (SameText(FieldName, 'estatus') or SameText(FieldName, 'propietario')) and
+         not SameText(FCurrentTable, 'animales') then
+      begin
+        CATTable := GetCATTable(FieldName);
+        if CATTable <> '' then
+          Qry.SQL.Text := 'SELECT DISTINCT valor FROM ' + CATTable + ' WHERE valor IS NOT NULL' +
+            ' UNION SELECT DISTINCT a."' + FieldName + '" FROM animales a WHERE a."' + FieldName + '" IS NOT NULL' +
+            ' AND a."' + FieldName + '" NOT IN (SELECT valor FROM ' + CATTable + ')' +
+            ' AND a.numero IN (SELECT ' + GetFKField(FCurrentTable) + ' FROM ' + FCurrentTable + ') ORDER BY 1'
+        else
+          Qry.SQL.Text := 'SELECT DISTINCT a."' + FieldName + '" FROM animales a WHERE a."' + FieldName +
+            '" IS NOT NULL AND a.numero IN (SELECT ' + GetFKField(FCurrentTable) + ' FROM ' +
+            FCurrentTable + ') ORDER BY a."' + FieldName + '"';
+      end
+      else
+        Qry.SQL.Text := 'SELECT DISTINCT "' + FieldName + '" FROM ' + FCurrentTable +
+          ' WHERE "' + FieldName + '" IS NOT NULL ORDER BY "' + FieldName + '"';
+      Qry.Open;
+      while not Qry.Eof do
+      begin
+        Val := Qry.Fields[0].AsString;
+        if SameText(FieldName, 'fecha') and (Length(Val) >= 10) and (Val[5] = '-') then
+          Val := Copy(Val, 9, 2) + '-' + Copy(Val, 6, 2) + '-' + Copy(Val, 1, 4);
+        Values.Add(Val);
+        Qry.Next;
+      end;
+    finally
+      Qry.Free;
+    end;
+
+    CheckList.Items.Add('(Todos)');
+    CheckList.Items.AddStrings(Values);
+    CheckList.Checked[0] := True;
+
+    if SameText(FieldName, 'estatus') then
+    begin
+      CheckList.Checked[0] := False; // Desmarcar (Todos) para que solo Vivos esté activo
+      for I := 1 to CheckList.Items.Count - 1 do
+        if SameText(CheckList.Items[I], 'Vivos') then
+        begin
+          CheckList.Checked[I] := True;
+          Break;
+        end;
+    end
+    else if SameText(FieldName, 'fecha') and SameText(FCurrentTable, 'palpaciones') then
+    begin
+      CheckList.Checked[0] := False; // Solo la fecha más reciente
+      for I := 1 to CheckList.Items.Count - 1 do
+        CheckList.Checked[I] := I = CheckList.Items.Count - 1;
+    end
+    else
+      for I := 1 to CheckList.Items.Count - 1 do
+        CheckList.Checked[I] := True;
+
+    CheckList.OnClickCheck := FilterComboChange;
+
+  except
+    on E: Exception do
+    begin
+      CheckList.OnClickCheck := nil;
+      CheckList.Items.Clear;
+      Values.Clear;
+      CheckList.Visible := False;
+      Button.Enabled := False;
+      LabelCtrl.Visible := False;
+    end;
+  end;
+end;
+
+procedure TForm1.ApplyFilters;
+var
+  FilterStrs: TStringList;
+  GlobalFilter, FinalFilter: string;
+  I: Integer;
+
+    function GetMultiFilter(CheckList: TCheckListBox; FieldName: string): string;
+    var
+      J: Integer;
+      SubFilter: string;
+      AllChecked: Boolean;
+      FVal: string;
+    begin
+      Result := '';
+      if CheckList.Items.Count = 0 then Exit;
+      SubFilter := '';
+      AllChecked := CheckList.Checked[0];
+      if not AllChecked then
+      begin
+        for J := 1 to CheckList.Items.Count - 1 do
+        begin
+          if CheckList.Checked[J] then
+          begin
+            if SubFilter <> '' then SubFilter := SubFilter + ',';
+            FVal := CheckList.Items[J];
+            if SameText(FieldName, 'fecha') and (Length(FVal) >= 10) and (FVal[3] = '-') then
+              FVal := Copy(FVal, 7, 4) + '-' + Copy(FVal, 4, 2) + '-' + Copy(FVal, 1, 2);
+            SubFilter := SubFilter + '''' + FVal + '''';
+          end;
+        end;
+        
+        // Si no hay nada marcado y no es "Todos", forzar que no se vea nada (0=1)
+        if SubFilter = '' then
+          Result := '(0=1)'
+        else
+          Result := '[' + FieldName + '] IN (' + SubFilter + ')';
+      end;
+    end;
+
+var
+  FilterCheckLists: array[0..3] of TCheckListBox;
+begin
+  FilterCheckLists[0] := cklFilterEstatus;
+  FilterCheckLists[1] := cklFilterTipo;
+  FilterCheckLists[2] := cklFilterLote;
+  FilterCheckLists[3] := cklFilterPropietario;
+  if not FQuery.Active then Exit;
+
+  FilterStrs := TStringList.Create;
+  try
+    // 1. Filtro global (edtFilter)
+    if Trim(edtFilter.Text) <> '' then
+    begin
+      GlobalFilter := '';
+      for I := 0 to FQuery.FieldCount - 1 do
+      begin
+        // El filtro global busca en todos los campos de datos (aunque estén ocultos visualmente)
+        if (FQuery.Fields[I].FieldKind = fkData) then
+        begin
+          if FQuery.Fields[I].DataType in [ftString, ftWideString, ftSmallint, ftInteger, ftWord, ftFloat, ftCurrency, ftBCD, ftLargeint, ftMemo, ftWideMemo, ftDate, ftDateTime] then
+          begin
+            if GlobalFilter <> '' then
+              GlobalFilter := GlobalFilter + ' OR ';
+            GlobalFilter := GlobalFilter + '[' + FQuery.Fields[I].FieldName + '] LIKE ''%' + Trim(edtFilter.Text) + '%''';
+          end;
+        end;
+      end;
+      if GlobalFilter <> '' then
+        FilterStrs.Add('(' + GlobalFilter + ')');
+    end;
+
+    // 2. Filtros específicos exactos dinámicos por tabla
+    for I := 0 to 3 do
+    begin
+      FinalFilter := GetMultiFilter(FilterCheckLists[I], GetFilterField(FCurrentTable, I));
+      if FinalFilter <> '' then FilterStrs.Add(FinalFilter);
+    end;
+
+    // Múltiples filtros se aplican todos juntos de forma combinada (AND)
+    FinalFilter := '';
+    for I := 0 to FilterStrs.Count - 1 do
+    begin
+      if FinalFilter <> '' then
+        FinalFilter := FinalFilter + ' AND ';
+      FinalFilter := FinalFilter + FilterStrs[I];
+    end;
+
+    if FinalFilter <> '' then
+    begin
+      FQuery.Filter := FinalFilter;
+      FQuery.Filtered := True;
+    end
+    else
+    begin
+      FQuery.Filtered := False;
+      FQuery.Filter := '';
+    end;
+
+  finally
+    FilterStrs.Free;
+  end;
+  UpdateRecordCount;
+end;
+
+procedure TForm1.ApplyPickLists(DataSet: TDataSet = nil);
+var
+  I: Integer;
+begin
+  if not FQuery.Active then Exit;
+  for I := 0 to DBGrid1.Columns.Count - 1 do
+  begin
+    if SameText(DBGrid1.Columns[I].FieldName, 'tipo') and (FListTipo.Count > 0) then
+    begin
+      DBGrid1.Columns[I].PickList.Assign(FListTipo);
+      DBGrid1.Columns[I].ButtonStyle := cbsAuto;
+    end
+    else if SameText(DBGrid1.Columns[I].FieldName, 'lote') and (FListLote.Count > 0) then
+    begin
+      DBGrid1.Columns[I].PickList.Assign(FListLote);
+      DBGrid1.Columns[I].ButtonStyle := cbsAuto;
+    end
+    else if SameText(DBGrid1.Columns[I].FieldName, 'estatus') and (FListEstatus.Count > 0) then
+    begin
+      DBGrid1.Columns[I].PickList.Assign(FListEstatus);
+      DBGrid1.Columns[I].ButtonStyle := cbsAuto;
+    end
+    else if SameText(DBGrid1.Columns[I].FieldName, 'propietario') and (FListPropietario.Count > 0) then
+    begin
+      DBGrid1.Columns[I].PickList.Assign(FListPropietario);
+      DBGrid1.Columns[I].ButtonStyle := cbsAuto;
+    end;
+  end;
+end;
+
+procedure TForm1.UpdateRecordCount;
+var
+  Bm: TBookmark;
+  Cnt, I: Integer;
+  DiagCounts: array of record Diag: string; Cnt: Integer; end;
+  DiagIdx: Integer;
+  DiagField: TField;
+  DiagVal: string;
+  Summary: string;
+  Total: Double;
+begin
+  if Assigned(lblRecordCount) then
+  begin
+    if FQuery.Active then
+    begin
+      if FQuery.Filtered then
+      begin
+        Bm := FQuery.GetBookmark;
+        try
+          FQuery.DisableControls;
+          FQuery.Last;
+          Cnt := FQuery.RecordCount;
+        finally
+          FQuery.GotoBookmark(Bm);
+          FQuery.EnableControls;
+        end;
+      end
+      else
+        Cnt := FQuery.RecordCount;
+      lblRecordCount.Caption := 'Registros: ' + FormatFloat('#,##0', Cnt);
+
+      // Resumen por diagnóstico para palpaciones
+      if SameText(FCurrentTable, 'palpaciones') then
+      begin
+        SetLength(DiagCounts, 0);
+        Bm := FQuery.GetBookmark;
+        try
+          FQuery.DisableControls;
+          FQuery.First;
+          DiagField := FQuery.FindField('diagnostico');
+          if DiagField <> nil then
+            while not FQuery.Eof do
+            begin
+              DiagVal := Trim(DiagField.AsString);
+              if DiagVal = '' then DiagVal := '(Sin diagn'#243'stico)';
+              DiagIdx := -1;
+              for I := 0 to High(DiagCounts) do
+                if SameText(DiagCounts[I].Diag, DiagVal) then begin DiagIdx := I; Break; end;
+              if DiagIdx < 0 then
+              begin
+                SetLength(DiagCounts, Length(DiagCounts) + 1);
+                DiagIdx := High(DiagCounts);
+                DiagCounts[DiagIdx].Diag := DiagVal;
+                DiagCounts[DiagIdx].Cnt := 0;
+              end;
+              Inc(DiagCounts[DiagIdx].Cnt);
+              FQuery.Next;
+            end;
+        finally
+          FQuery.GotoBookmark(Bm);
+          FQuery.EnableControls;
+        end;
+        if Length(DiagCounts) > 0 then
+        begin
+          Summary := '';
+          for I := 0 to High(DiagCounts) do
+          begin
+            if not SameText(DiagCounts[I].Diag, 'Pre'#241'ada') and
+               not SameText(DiagCounts[I].Diag, 'Vacia') then Continue;
+            if Summary <> '' then Summary := Summary + ' | ';
+            Summary := Summary + DiagCounts[I].Diag + ': ' + IntToStr(DiagCounts[I].Cnt) +
+              ' (' + FormatFloat('0.0', (DiagCounts[I].Cnt / Cnt) * 100) + '%)';
+          end;
+          if Summary <> '' then
+            lblRecordCount.Caption := lblRecordCount.Caption + '    ' + Summary;
+        end;
+      end;
+
+      // Resumen por tipo para animales
+      if SameText(FCurrentTable, 'animales') then
+      begin
+        SetLength(DiagCounts, 0);
+        Bm := FQuery.GetBookmark;
+        try
+          FQuery.DisableControls;
+          FQuery.First;
+          DiagField := FQuery.FindField('tipo');
+          if DiagField <> nil then
+            while not FQuery.Eof do
+            begin
+              DiagVal := Trim(DiagField.AsString);
+              if DiagVal = '' then DiagVal := '(Sin tipo)';
+              DiagIdx := -1;
+              for I := 0 to High(DiagCounts) do
+                if SameText(DiagCounts[I].Diag, DiagVal) then begin DiagIdx := I; Break; end;
+              if DiagIdx < 0 then
+              begin
+                SetLength(DiagCounts, Length(DiagCounts) + 1);
+                DiagIdx := High(DiagCounts);
+                DiagCounts[DiagIdx].Diag := DiagVal;
+                DiagCounts[DiagIdx].Cnt := 0;
+              end;
+              Inc(DiagCounts[DiagIdx].Cnt);
+              FQuery.Next;
+            end;
+        finally
+          FQuery.GotoBookmark(Bm);
+          FQuery.EnableControls;
+        end;
+        if Length(DiagCounts) > 0 then
+        begin
+          Summary := '';
+          for I := 0 to High(DiagCounts) do
+          begin
+            if Summary <> '' then Summary := Summary + ' | ';
+            Summary := Summary + DiagCounts[I].Diag + ': ' + IntToStr(DiagCounts[I].Cnt) +
+              ' (' + FormatFloat('0.0', (DiagCounts[I].Cnt / Cnt) * 100) + '%)';
+          end;
+          if Summary <> '' then
+            lblRecordCount.Caption := lblRecordCount.Caption + '    ' + Summary;
+        end;
+      end;
+
+      // Suma y promedio de kg para control_leche
+      if SameText(FCurrentTable, 'control_leche') then
+      begin
+        Bm := FQuery.GetBookmark;
+        try
+          FQuery.DisableControls;
+          FQuery.First;
+          Total := 0;
+          Cnt := 0;
+          while not FQuery.Eof do
+          begin
+            Total := Total + FQuery.FieldByName('kg').AsFloat;
+            Inc(Cnt);
+            FQuery.Next;
+          end;
+        finally
+          FQuery.GotoBookmark(Bm);
+          FQuery.EnableControls;
+        end;
+        if Cnt > 0 then
+          lblRecordCount.Caption := lblRecordCount.Caption +
+            Format('    Neto: %.1f kg    Prom: %.2f kg', [Total, Total / Cnt]);
+      end;
+    end
+    else
+      lblRecordCount.Caption := 'Registros: 0';
+  end;
+end;
+
+procedure TForm1.FQueryAfterPost(DataSet: TDataSet);
+var
+  AnimalesField, NewVal, OldVal: string;
+  Q: TFDQuery;
+begin
+  AnimalesField := GetCATAnimalesField(FCurrentTable);
+  if AnimalesField = '' then Exit;
+
+  NewVal := DataSet.FieldByName('valor').AsString;
+
+  // Consultar el valor original directamente en la BD (bypasea CachedUpdates)
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := FConnection;
+    Q.SQL.Text := 'SELECT valor FROM ' + FCurrentTable + ' WHERE id = :Id';
+    Q.ParamByName('Id').AsInteger := DataSet.FieldByName('id').AsInteger;
+    Q.Open;
+    if Q.IsEmpty then Exit;
+    OldVal := Q.Fields[0].AsString;
+    if AnsiSameText(OldVal, NewVal) then Exit;
+  finally
+    Q.Free;
+  end;
+
+  FConnection.ExecSQL(
+    'UPDATE animales SET "' + AnimalesField + '" = ' + QuotedStr(NewVal) +
+    ' WHERE "' + AnimalesField + '" = ' + QuotedStr(OldVal));
+end;
+
+function TForm1.DataSetToJSON(DataSet: TDataSet): TJSONArray;
+var
+  JObj: TJSONObject;
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  DataSet.First;
+  while not DataSet.Eof do
+  begin
+    JObj := TJSONObject.Create;
+    for I := 0 to DataSet.FieldCount - 1 do
+    begin
+      if DataSet.Fields[I].DataType in [ftInteger, ftSmallint, ftWord, ftLargeint] then
+        JObj.AddPair(DataSet.Fields[I].FieldName, TJSONNumber.Create(DataSet.Fields[I].AsLargeInt))
+      else if DataSet.Fields[I].DataType in [ftFloat, ftCurrency, ftBCD] then
+        JObj.AddPair(DataSet.Fields[I].FieldName, TJSONNumber.Create(DataSet.Fields[I].AsFloat))
+      else
+        JObj.AddPair(DataSet.Fields[I].FieldName, DataSet.Fields[I].AsString);
+      end;
+    Result.AddElement(JObj);
+    DataSet.Next;
+  end;
+end;
+
+function TForm1.DataSetToJSONWithEdad(DataSet: TDataSet): TJSONArray;
+var
+  JObj: TJSONObject;
+  I: Integer;
+begin
+  Result := TJSONArray.Create;
+  DataSet.First;
+  while not DataSet.Eof do
+  begin
+    JObj := TJSONObject.Create;
+    for I := 0 to DataSet.FieldCount - 1 do
+    begin
+      if DataSet.Fields[I].DataType in [ftInteger, ftSmallint, ftWord, ftLargeint] then
+        JObj.AddPair(DataSet.Fields[I].FieldName, TJSONNumber.Create(DataSet.Fields[I].AsLargeInt))
+      else if DataSet.Fields[I].DataType in [ftFloat, ftCurrency, ftBCD] then
+        JObj.AddPair(DataSet.Fields[I].FieldName, TJSONNumber.Create(DataSet.Fields[I].AsFloat))
+      else
+        JObj.AddPair(DataSet.Fields[I].FieldName, DataSet.Fields[I].AsString);
+    end;
+
+    if DataSet.FindField('fecha_nac') <> nil then
+      JObj.AddPair('Edad', CalcEdadFromFechaStr(DataSet.FieldByName('fecha_nac').AsString))
+    else
+      JObj.AddPair('Edad', '');
+
+    Result.AddElement(JObj);
+    DataSet.Next;
+  end;
+end;
+
+class function TForm1.GetTableSQL(const TableName: string): string;
+begin
+  if SameText(TableName, 'partos') then
+    Result := 'SELECT partos.rowid, partos.id, partos.fecha, partos.num_madre, ' +
+      'partos.num_asignado, partos.sexo, partos.peso, partos.estado as tipo_parto, ' +
+      'partos.raza, partos.padre, partos.observacion, ' +
+      'partos.creado_por, partos.creado_en, ' +
+      '(SELECT a.nombre FROM animales a WHERE a.numero = partos.num_madre) as nom_madre, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = partos.num_madre) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = partos.num_madre) as estatus, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = partos.num_asignado) as estatus_cria ' +
+      'FROM partos ORDER BY partos.fecha'
+  else if SameText(TableName, 'servicios') then
+    Result := 'SELECT servicios.rowid, servicios.id, servicios.fecha, servicios.numero, ' +
+      'servicios.tipo, servicios.toro, servicios.raza_toro, ' +
+      'servicios.creado_por, servicios.creado_en, ' +
+      '(SELECT a.nombre FROM animales a WHERE a.numero = servicios.numero) as nombre, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = servicios.numero) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = servicios.numero) as estatus ' +
+      'FROM servicios ORDER BY servicios.fecha'
+  else if SameText(TableName, 'control_leche') then
+    Result := 'SELECT control_leche.rowid, control_leche.id, control_leche.fecha, control_leche.numero_animal, ' +
+      'control_leche.kg, control_leche.turno, control_leche.peso_tobo, ' +
+      'control_leche.creado_por, control_leche.creado_en, ' +
+      '(SELECT a.nombre FROM animales a WHERE a.numero = control_leche.numero_animal) as nombre_animal, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = control_leche.numero_animal) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = control_leche.numero_animal) as estatus ' +
+      'FROM control_leche ORDER BY control_leche.fecha'
+  else if SameText(TableName, 'bajas') then
+    Result := 'SELECT bajas.rowid, bajas.id, bajas.fecha, bajas.numero_animal, ' +
+      'bajas.causa, bajas.observaciones, bajas.creado_por, ' +
+      'bajas.comprador, bajas.precio_total, bajas.peso_venta, ' +
+      'bajas.guia_movilizacion, bajas.tiene_seguro, bajas.tipo_baja, bajas.creado_en, ' +
+      '(SELECT a.nombre FROM animales a WHERE a.numero = bajas.numero_animal) as nombre_animal, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = bajas.numero_animal) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = bajas.numero_animal) as estatus ' +
+      'FROM bajas ORDER BY bajas.fecha'
+  else if SameText(TableName, 'palpaciones') then
+    Result := 'SELECT palpaciones.rowid, palpaciones.id, palpaciones.fecha, palpaciones.numero, ' +
+      'palpaciones.diagnostico, palpaciones.observaciones, palpaciones.dias_prenez, ' +
+      'palpaciones.tecnico, palpaciones.creado_por, palpaciones.creado_en, ' +
+      '(SELECT a.nombre FROM animales a WHERE a.numero = palpaciones.numero) as nombre, ' +
+      '(SELECT a.propietario FROM animales a WHERE a.numero = palpaciones.numero) as propietario, ' +
+      '(SELECT a.estatus FROM animales a WHERE a.numero = palpaciones.numero) as estatus, ' +
+      '(SELECT a.lote FROM animales a WHERE a.numero = palpaciones.numero) as lote, ' +
+      '(SELECT CASE WHEN MAX(s.fecha) IS NOT NULL THEN ' +
+        'SUBSTR(MAX(s.fecha),9,2)||''-''||SUBSTR(MAX(s.fecha),6,2)||''-''||SUBSTR(MAX(s.fecha),1,4)||'' (''||' +
+        'CAST(CAST(julianday(palpaciones.fecha)-julianday(MAX(s.fecha)) AS INTEGER) AS TEXT)||'' d'#237's)'' ' +
+      'ELSE '''' END FROM servicios s WHERE s.numero = palpaciones.numero AND s.fecha <= palpaciones.fecha ' +
+      'AND julianday(palpaciones.fecha)-julianday(s.fecha) <= 290) as ultimo_servicio, ' +
+      '(SELECT CASE WHEN MAX(p.fecha) IS NOT NULL THEN ' +
+        'SUBSTR(MAX(p.fecha),9,2)||''-''||SUBSTR(MAX(p.fecha),6,2)||''-''||SUBSTR(MAX(p.fecha),1,4)||'' (''||' +
+        'CAST(CAST(julianday(palpaciones.fecha)-julianday(MAX(p.fecha)) AS INTEGER) AS TEXT)||'' d'#237's)'' ' +
+      'ELSE '''' END FROM partos p WHERE p.num_madre = palpaciones.numero AND p.fecha <= palpaciones.fecha ' +
+      ') as ultimo_parto ' +
+      'FROM palpaciones ORDER BY palpaciones.fecha'
+  else if SameText(TableName, 'CAT_TIPO') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE tipo = CAT_TIPO.valor) as cantidad FROM CAT_TIPO'
+  else if SameText(TableName, 'CAT_LOTE') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE lote = CAT_LOTE.valor) as cantidad FROM CAT_LOTE'
+  else if SameText(TableName, 'CAT_ESTATUS') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE estatus = CAT_ESTATUS.valor) as cantidad FROM CAT_ESTATUS'
+  else if SameText(TableName, 'CAT_Propietario') then
+    Result := 'SELECT rowid, *, ' +
+      '(SELECT COUNT(*) FROM animales WHERE propietario = CAT_Propietario.valor) as cantidad FROM CAT_Propietario'
+  else if SameText(TableName, 'animales') then
+    Result := 'SELECT rowid, animales.id, animales.numero, animales.nombre, ' +
+      'animales.fecha_nac, animales.sexo, animales.raza, ' +
+      'animales.tipo, animales.lote, animales.estatus, ' +
+      'animales.propietario, animales.num_madre, ' +
+      'animales.padre, animales.peso_nacer, animales.comentarios, ' +
+      'animales.foto_animal, animales.foto_hierro, ' +
+      'animales.fecha_parto_est, animales.estatus_repro, ' +
+      '(SELECT a.nombre FROM animales a WHERE a.numero = animales.num_madre) as nom_madre ' +
+      'FROM animales ORDER BY animales.numero'
+  else
+    Result := 'SELECT rowid, * FROM ' + TableName;
+end;
+
+class function TForm1.GetFilterField(const TableName: string; Slot: Integer): string;
+begin
+  Result := '';
+  if SameText(TableName, 'animales') then
+    case Slot of
+      0: Result := 'estatus';
+      1: Result := 'tipo';
+      2: Result := 'lote';
+      3: Result := 'propietario';
+    end
+   else if SameText(TableName, 'partos') then
+    case Slot of
+      0: Result := 'tipo_parto';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+      3: Result := 'sexo';
+    end
+  else if SameText(TableName, 'servicios') then
+    case Slot of
+      0: Result := 'tipo';
+      1: Result := 'toro';
+      2: Result := 'propietario';
+      3: Result := 'estatus';
+    end
+  else if SameText(TableName, 'bajas') then
+    case Slot of
+      0: Result := 'tipo_baja';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+      3: Result := 'causa';
+    end
+  else if SameText(TableName, 'palpaciones') then
+    case Slot of
+      0: Result := 'fecha';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+      3: Result := 'tecnico';
+    end
+  else if SameText(TableName, 'control_leche') then
+    case Slot of
+      0: Result := 'fecha';
+      1: Result := 'propietario';
+      2: Result := 'estatus';
+    end
+  else if SameText(TableName, 'queso') then
+    case Slot of
+      0: Result := 'equipo';
+    end;
+end;
+
+class function TForm1.GetFilterLabel(const FieldName: string): string;
+begin
+  if SameText(FieldName, 'fecha') then Result := 'Fecha:'
+  else if SameText(FieldName, 'tipo_parto') then Result := 'Tipo de Parto:'
+  else if SameText(FieldName, 'estado') then Result := 'Estado (Cría):'
+  else if SameText(FieldName, 'estatus_cria') then Result := 'Estatus Cría:'
+  else if SameText(FieldName, 'tipo_baja') then Result := 'Tipo Baja:'
+  else if SameText(FieldName, 'raza_toro') then Result := 'Raza Toro:'
+  else if FieldName <> '' then Result := FieldName + ':'
+  else Result := '';
+end;
+
+class function TForm1.CalcEdadFromFechaStr(const FechaStr: string): string;
+var
+  FechaNac: TDateTime;
+  Years, Months, D, M, Y: Integer;
+  S: string;
+begin
+  Result := '';
+  S := Trim(FechaStr);
+  if S = '' then Exit;
+
+  FechaNac := 0;
+  if (Length(S) >= 10) and (S[5] = '-') and (S[8] = '-') then
+  begin
+    Y := StrToIntDef(Copy(S, 1, 4), 0);
+    M := StrToIntDef(Copy(S, 6, 2), 0);
+    D := StrToIntDef(Copy(S, 9, 2), 0);
+    if (Y > 1900) and (M > 0) and (D > 0) then
+      TryEncodeDate(Y, M, D, FechaNac);
+  end
+  else if (Length(S) >= 10) and (S[3] = '-') and (S[6] = '-') then
+  begin
+    D := StrToIntDef(Copy(S, 1, 2), 0);
+    M := StrToIntDef(Copy(S, 4, 2), 0);
+    Y := StrToIntDef(Copy(S, 7, 4), 0);
+    if (Y > 1900) and (M > 0) and (D > 0) then
+      TryEncodeDate(Y, M, D, FechaNac);
+  end;
+
+  if (FechaNac = 0) and not TryStrToDate(S, FechaNac) then
+  begin
+    Result := '?';
+    Exit;
+  end;
+
+  if FechaNac > Date then
+  begin
+    Result := '0 meses';
+    Exit;
+  end;
+
+  Years := YearsBetween(Date, FechaNac);
+  Months := MonthsBetween(Date, FechaNac) mod 12;
+
+  if Years > 0 then
+    Result := Format('%d año(s), %d mes(es)', [Years, Months])
+  else
+    Result := Format('%d mes(es)', [Months]);
+end;
+
+procedure TForm1.FQueryCalcFields(DataSet: TDataSet);
+begin
+  if not SameText(FCurrentTable, 'animales') then Exit;
+  if (DataSet.FindField('Edad') = nil) or (DataSet.FindField('fecha_nac') = nil) then Exit;
+
+  DataSet.FieldByName('Edad').AsString := CalcEdadFromFechaStr(DataSet.FieldByName('fecha_nac').AsString);
+end;
+
+procedure TForm1.FQueryPartosBeforePost(DataSet: TDataSet);
+begin
+  // La actualizaci�n de estatus de la cr�a se maneja en btnRefreshClick
+end;
+
+procedure TForm1.FieldGetText(Sender: TField; var Text: string; DisplayText: Boolean);
+var
+  S: string;
+begin
+  S := Sender.AsString;
+  if (Length(S) >= 10) and (S[5] = '-') and (S[8] = '-') then
+    Text := Copy(S, 9, 2) + '-' + Copy(S, 6, 2) + '-' + Copy(S, 1, 4)
+  else
+    Text := S;
+end;
+
+procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  CanClose := True;
+end;
+
+function TForm1.ServicioActivo: Boolean;
+var
+  SCM: SC_HANDLE;
+  Serv: SC_HANDLE;
+  Status: TServiceStatus;
+begin
+  Result := False;
+  SCM := OpenSCManager(nil, nil, SC_MANAGER_CONNECT);
+  if SCM = 0 then Exit;
+  try
+    Serv := OpenService(SCM, 'ServicioSisgan', SERVICE_QUERY_STATUS);
+    if Serv <> 0 then
+    begin
+      QueryServiceStatus(Serv, Status);
+      Result := Status.dwCurrentState = SERVICE_RUNNING;
+      CloseServiceHandle(Serv);
+    end;
+  finally
+    CloseServiceHandle(SCM);
+  end;
+end;
+
+procedure TForm1.IniciarServicio;
+begin
+  ShellExecute(Application.Handle, 'runas', 'net.exe', 'start ServicioSisgan', nil, SW_SHOW);
+end;
+
+procedure TForm1.DetenerServicio;
+begin
+  ShellExecute(Application.Handle, 'runas', 'net.exe', 'stop ServicioSisgan', nil, SW_SHOW);
+end;
+
+procedure TForm1.btnToggleServiceClick(Sender: TObject);
+begin
+  if ServicioActivo then
+    DetenerServicio
+  else
+    IniciarServicio;
+end;
+
+procedure TForm1.TimerStatusTimer(Sender: TObject);
+begin
+  if ServicioActivo then
+  begin
+    lblStatus.Caption := 'Servicio: ACTIVO';
+    lblStatus.Font.Color := clGreen;
+    btnToggleService.Caption := 'Detener Servicio';
+  end
+  else
+  begin
+    lblStatus.Caption := 'Servicio: DETENIDO';
+    lblStatus.Font.Color := clRed;
+    btnToggleService.Caption := 'Iniciar Servicio';
+  end;
+end;
+
+procedure TForm1.btnDeleteClick(Sender: TObject);
+var
+  KeyField: TField;
+  TableName: string;
+  IdValue: Variant;
+begin
+  if not FQuery.Active or FQuery.IsEmpty then Exit;
+
+  if MessageDlg('¿Está seguro de que desea eliminar el registro seleccionado?',
+                mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  begin
+    TableName := FCurrentTable;
+    KeyField := FQuery.FindField('id');
+    if KeyField = nil then KeyField := FQuery.FindField('clave');
+    if KeyField = nil then KeyField := FQuery.FindField('rowid');
+
+    if KeyField <> nil then
+    begin
+      IdValue := KeyField.Value;
+      try
+        if KeyField.DataType in [ftString, ftWideString] then
+          FConnection.ExecSQL('DELETE FROM "' + TableName + '" WHERE "' + KeyField.FieldName + '" = ' + QuotedStr(VarToStr(IdValue)))
+        else
+          FConnection.ExecSQL('DELETE FROM "' + TableName + '" WHERE "' + KeyField.FieldName + '" = ' + VarToStr(IdValue));
+
+        FQuery.Close;
+        FQuery.Open;
+        UpdateRecordCount;
+      except
+        on E: Exception do
+          ShowMessage('Error al eliminar: ' + E.Message);
+      end;
+    end;
+  end;
+end;
+
+procedure TForm1.btnAddClick(Sender: TObject);
+begin
+  if not FQuery.Active then Exit;
+  FQuery.Append;
+  DBGrid1.SetFocus;
+end;
+
+procedure TForm1.btnUndoClick(Sender: TObject);
+begin
+  if FQuery.Active and FQuery.CachedUpdates then
+  begin
+    FQuery.UndoLastChange(True); // True para posicionar el cursor en el registro recuperado
+    UpdateRecordCount;
+    btnUndo.Enabled := False;
+    TimerUndo.Enabled := False;
+  end;
+end;
+
+procedure TForm1.TimerUndoTimer(Sender: TObject);
+begin
+  TimerUndo.Enabled := False;
+  btnUndo.Enabled := False;
+end;
+
+procedure TForm1.btnCloseAppClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TForm1.LoadEstilos;
+var
+  VSPath: string;
+  Item: TMenuItem;
+  SR: TSearchRec;
+begin
+  MenuEstilo.Clear;
+  VSPath := ExtractFilePath(ParamStr(0));
+
+  if System.SysUtils.FindFirst(VSPath + '*.vsf', faAnyFile, SR) = 0 then
+  begin
+    try
+      repeat
+        Item := TMenuItem.Create(MenuEstilo);
+        Item.Caption := ChangeFileExt(SR.Name, '');
+        Item.Hint := VSPath + SR.Name;
+        Item.OnClick := EstiloClick;
+        Item.RadioItem := True;
+        MenuEstilo.Add(Item);
+      until System.SysUtils.FindNext(SR) <> 0;
+    finally
+      System.SysUtils.FindClose(SR);
+    end;
+  end;
+end;
+
+procedure TForm1.ApplyStyle(const AFileName: string);
+var
+  I: Integer;
+  Item: TMenuItem;
+begin
+  // Find the menu item whose Hint or Caption contains the key
+  for I := 0 to MenuEstilo.Count - 1 do
+  begin
+    Item := MenuEstilo[I];
+    if ContainsText(Item.Caption, AFileName) then
+    begin
+      EstiloClick(Item);
+      Exit;
+    end;
+  end;
+end;
+
+procedure TForm1.EstiloClick(Sender: TObject);
+var
+  Item: TMenuItem;
+  Style: TCustomStyleServices;
+  I: Integer;
+begin
+  if not (Sender is TMenuItem) then Exit;
+  Item := TMenuItem(Sender);
+
+  if not FileExists(Item.Hint) then
+  begin
+    ShowMessage('Archivo de estilo no encontrado: ' + Item.Hint);
+    Exit;
+  end;
+
+  Style := TCustomStyle.LoadFromFile(Item.Hint);
+  if Style = nil then
+  begin
+    ShowMessage('Error al cargar el estilo: ' + Item.Caption);
+    Exit;
+  end;
+
+  TStyleManager.SetStyle(Style);
+  for I := 0 to MenuEstilo.Count - 1 do
+    MenuEstilo[I].Checked := MenuEstilo[I] = Item;
+end;
+
+end.
+
+
+////X_qdpxtZDTs-NG9
